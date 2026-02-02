@@ -13,7 +13,14 @@
             user-select: none; -webkit-user-select: none;
         }
 
-        /* --- UI OVERLAYS --- */
+        /* 디버그 창 (문제 발생시 확인용) */
+        #debug-console {
+            position: absolute; top: 0; left: 0; width: 100%; height: auto; max-height: 100px;
+            background: rgba(255, 0, 0, 0.8); color: white; padding: 10px;
+            font-size: 14px; z-index: 9999; display: none; text-align: center;
+        }
+
+        /* UI OVERLAYS */
         #ui-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10;
             pointer-events: none; display: flex; justify-content: center; align-items: center;
@@ -89,14 +96,6 @@
         @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
         
         #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
-        
-        /* Debug Console (Optional) */
-        #debug-console {
-            position: absolute; top: 0; left: 0; width: 300px; height: 150px;
-            background: rgba(0,0,0,0.7); color: #ff5555; padding: 10px;
-            font-size: 12px; overflow-y: auto; z-index: 9999;
-            pointer-events: none; display: none; 
-        }
     </style>
 </head>
 <body>
@@ -107,7 +106,7 @@
         <img id="huzzah-img" src="huzzah.gif" alt="HUZZAH" 
              onerror="this.src='https://media.giphy.com/media/MdGZp0GkF2L7i/giphy.gif'">
         <div class="click-hint" id="start-btn-text">LOADING...</div>
-        <div id="status-text">Getting things ready</div>
+        <div id="status-text">Connecting to memories...</div>
     </div>
 
     <div id="ui-layer">
@@ -138,24 +137,23 @@
     <div id="zoom-overlay" onclick="this.style.display='none'"><img id="zoom-img" src=""></div>
     <div id="canvas-container"></div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r146/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 
     <script>
-        // --- ERROR LOGGING ---
-        function logError(msg) {
-            const el = document.getElementById('debug-console');
-            el.style.display = 'block';
-            el.innerHTML += "⚠️ " + msg + "<br>";
-            console.error(msg);
-        }
-        window.onerror = function(msg, source, lineno) {
-            logError(`JS Error: ${msg} (Line ${lineno})`);
-        };
+        // --- 1. 라이브러리 로드 체크 (가장 중요) ---
+        window.addEventListener('load', function() {
+            if (typeof THREE === 'undefined') {
+                const debug = document.getElementById('debug-console');
+                debug.style.display = 'block';
+                debug.innerHTML = "CRITICAL ERROR: 3D Engine failed to load.<br>Please refresh the page.";
+                return;
+            }
+            initApp();
+        });
 
         // --- GLOBAL VARIABLES ---
         let isStarted = false;
-        let isReady = false;
         let targetZ = 20;
         let loadedCount = 0;
         
@@ -175,16 +173,17 @@
 
         const totalPhotos = memories.reduce((acc, val) => acc + val.photos.length, 0);
 
-        // --- STARTUP ---
-        window.onload = function() {
-            isReady = true;
+        // --- APP INITIALIZATION ---
+        function initApp() {
             document.getElementById('start-btn-text').innerText = "CLICK TO START";
             document.getElementById('start-btn-text').style.color = "#d4af37";
             document.getElementById('status-text').innerText = "Ready!";
-        };
+            
+            init3D();
+        }
 
         function tryStart() {
-            if (!isReady) return;
+            if (typeof THREE === 'undefined') return;
             isStarted = true;
             targetZ = 10;
             const screen = document.getElementById('start-screen');
@@ -193,123 +192,128 @@
         }
 
         // --- 3D SCENE ---
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xfdfbfb);
-        scene.fog = new THREE.FogExp2(0xfdfbfb, 0.02);
+        let scene, camera, renderer, loader, groups = [], photoMeshes = [], fairyGrp;
 
-        const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 1000);
-        camera.position.z = 20;
+        function init3D() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xfdfbfb);
+            scene.fog = new THREE.FogExp2(0xfdfbfb, 0.02);
 
-        const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true;
-        document.getElementById('canvas-container').appendChild(renderer.domElement);
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 1000);
+            camera.position.z = 20;
 
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7); scene.add(ambientLight);
-        const dirLight = new THREE.DirectionalLight(0xffd700, 0.8); dirLight.position.set(10,20,10); dirLight.castShadow=true; scene.add(dirLight);
+            renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-        // --- ROBUST LOADER ---
-        // This function tries multiple extensions automatically
-        const loader = new THREE.TextureLoader();
-        const groups = [];
-        const photoMeshes = [];
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7); scene.add(ambientLight);
+            const dirLight = new THREE.DirectionalLight(0xffd700, 0.8); dirLight.position.set(10,20,10); dirLight.castShadow=true; scene.add(dirLight);
+
+            loader = new THREE.TextureLoader();
+
+            // Build Memories
+            memories.forEach(mem => {
+                const grp = new THREE.Group();
+                grp.position.z = mem.z;
+                
+                mem.photos.forEach(baseName => {
+                    // Create Placeholder Mesh
+                    const geometry = new THREE.PlaneGeometry(5, 3.5);
+                    const material = new THREE.MeshLambertMaterial({ color: Math.random() * 0xffffff }); 
+                    const mesh = new THREE.Mesh(geometry, material);
+                    
+                    mesh.position.set((Math.random()-0.5)*18, (Math.random()-0.5)*10, Math.random()*4);
+                    mesh.rotation.z = (Math.random()-0.5)*0.4;
+                    mesh.castShadow = true; 
+                    mesh.receiveShadow = true;
+                    
+                    const frame = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 3.7), new THREE.MeshBasicMaterial({color:0xffffff}));
+                    frame.position.z = -0.05; 
+                    mesh.add(frame);
+                    
+                    grp.add(mesh);
+                    photoMeshes.push(mesh);
+
+                    // Try loading texture
+                    tryLoadTexture(baseName, mesh);
+                });
+
+                // Hearts
+                for(let i=0; i<5; i++) {
+                    addHeart(grp);
+                }
+                
+                scene.add(grp);
+                groups.push(grp);
+            });
+
+            // Build Fairy (Modified for Compatibility)
+            createFairy();
+
+            // Start Loop
+            animate();
+        }
+
+        function addHeart(parentGrp) {
+            const shape = new THREE.Shape();
+            const x=0, y=0;
+            shape.moveTo(x+0.25, y+0.25);
+            shape.bezierCurveTo(x+0.25, y+0.25, x+0.20, y, x, y);
+            shape.bezierCurveTo(x-0.30, y, x-0.30, y+0.35, x-0.30, y+0.35);
+            shape.bezierCurveTo(x-0.30, y+0.55, x-0.10, y+0.77, x+0.25, y+0.95);
+            shape.bezierCurveTo(x+0.60, y+0.77, x+0.80, y+0.55, x+0.80, y+0.35);
+            shape.bezierCurveTo(x+0.80, y+0.35, x+0.80, y, x+0.50, y);
+            shape.bezierCurveTo(x+0.35, y, x+0.25, y+0.25, x+0.25, y+0.25);
+            const heart = new THREE.Mesh(new THREE.ShapeGeometry(shape), new THREE.MeshBasicMaterial({color: 0xff69b4, transparent:true, opacity:0.6}));
+            heart.scale.set(0.5,0.5,0.5);
+            heart.position.set((Math.random()-0.5)*30, (Math.random()-0.5)*20, (Math.random()-0.5)*10);
+            heart.rotation.z = Math.PI;
+            parentGrp.add(heart);
+        }
+
+        function createFairy() {
+            fairyGrp = new THREE.Group();
+            // ERROR FIX: Use Cylinder instead of Capsule (Compatible with old Three.js)
+            const bodyGeo = new THREE.CylinderGeometry(0.6, 0.6, 1.5, 32); 
+            const bodyMat = new THREE.MeshLambertMaterial({color: 0x8e44ad}); 
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.6), new THREE.MeshLambertMaterial({color: 0xffd54f})); 
+            head.position.y = 1.0;
+            
+            const wingGeo = new THREE.CircleGeometry(0.8, 32, 0, Math.PI);
+            const wingMat = new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0.6, side:THREE.DoubleSide});
+            const lWing = new THREE.Mesh(wingGeo, wingMat); lWing.position.set(-0.6, 0.5, -0.3); lWing.rotation.y = 0.5;
+            const rWing = new THREE.Mesh(wingGeo, wingMat); rWing.position.set(0.6, 0.5, -0.3); rWing.rotation.y = -0.5;
+            
+            fairyGrp.add(body, head, lWing, rWing);
+            fairyGrp.position.set(0, -5, -240); 
+            scene.add(fairyGrp);
+        }
 
         function tryLoadTexture(baseName, mesh) {
             const extensions = ['.jpg', '.JPG', '.jpeg', '.webp', '.png'];
-            
             function attempt(index) {
                 if(index >= extensions.length) {
-                    // Failed all extensions -> KEEP PINK BOX
-                    mesh.material.color.setHex(0xff0000); // Turn RED on error
+                    mesh.material.color.setHex(0xff0000); // Red on error
                     return;
                 }
-                
                 const url = baseName + extensions[index];
-                loader.load(url, 
-                    (tex) => {
-                        // Success!
-                        const aspect = tex.image.width / tex.image.height;
-                        mesh.geometry.dispose();
-                        mesh.geometry = new THREE.PlaneGeometry(6, 6/aspect);
-                        mesh.material.map = tex;
-                        mesh.material.color.setHex(0xffffff); // White (normal)
-                        mesh.material.needsUpdate = true;
-                        mesh.userData.src = url;
-                        loadedCount++;
-                        document.getElementById('status-text').innerText = `Photos loaded: ${loadedCount}/${totalPhotos}`;
-                    },
-                    undefined,
-                    () => {
-                        // Fail -> Try next extension
-                        attempt(index + 1);
-                    }
-                );
+                loader.load(url, (tex) => {
+                    const aspect = tex.image.width / tex.image.height;
+                    mesh.geometry.dispose();
+                    mesh.geometry = new THREE.PlaneGeometry(6, 6/aspect);
+                    mesh.material.map = tex;
+                    mesh.material.color.setHex(0xffffff);
+                    mesh.material.needsUpdate = true;
+                    mesh.userData.src = url;
+                    loadedCount++;
+                    document.getElementById('status-text').innerText = `Photos loaded: ${loadedCount}/${totalPhotos}`;
+                }, undefined, () => attempt(index + 1));
             }
             attempt(0);
         }
-
-        memories.forEach(mem => {
-            const grp = new THREE.Group();
-            grp.position.z = mem.z;
-            
-            mem.photos.forEach(baseName => {
-                // 1. Create a "Placeholder" Mesh first (Pastel Color Box)
-                const geometry = new THREE.PlaneGeometry(5, 3.5);
-                const material = new THREE.MeshLambertMaterial({ color: Math.random() * 0xffffff }); 
-                const mesh = new THREE.Mesh(geometry, material);
-                
-                mesh.position.set((Math.random()-0.5)*18, (Math.random()-0.5)*10, Math.random()*4);
-                mesh.rotation.z = (Math.random()-0.5)*0.4;
-                mesh.castShadow = true; 
-                mesh.receiveShadow = true;
-                
-                // Add White Frame
-                const frame = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 3.7), new THREE.MeshBasicMaterial({color:0xffffff}));
-                frame.position.z = -0.05; 
-                mesh.add(frame);
-                
-                grp.add(mesh);
-                photoMeshes.push(mesh);
-
-                // 2. Try to load the image onto it
-                tryLoadTexture(baseName, mesh);
-            });
-
-            // Decor: Hearts
-            for(let i=0; i<8; i++){
-                const shape = new THREE.Shape();
-                const x=0, y=0;
-                shape.moveTo(x+0.25, y+0.25);
-                shape.bezierCurveTo(x+0.25, y+0.25, x+0.20, y, x, y);
-                shape.bezierCurveTo(x-0.30, y, x-0.30, y+0.35, x-0.30, y+0.35);
-                shape.bezierCurveTo(x-0.30, y+0.55, x-0.10, y+0.77, x+0.25, y+0.95);
-                shape.bezierCurveTo(x+0.60, y+0.77, x+0.80, y+0.55, x+0.80, y+0.35);
-                shape.bezierCurveTo(x+0.80, y+0.35, x+0.80, y, x+0.50, y);
-                shape.bezierCurveTo(x+0.35, y, x+0.25, y+0.25, x+0.25, y+0.25);
-                const heart = new THREE.Mesh(new THREE.ShapeGeometry(shape), new THREE.MeshBasicMaterial({color: 0xff69b4, transparent:true, opacity:0.6}));
-                heart.scale.set(0.5,0.5,0.5);
-                heart.position.set((Math.random()-0.5)*30, (Math.random()-0.5)*20, (Math.random()-0.5)*10);
-                heart.rotation.z = Math.PI;
-                grp.add(heart);
-            }
-            scene.add(grp);
-            groups.push(grp);
-        });
-
-        // --- FAIRY ---
-        // Using CapsuleGeometry which requires Three.js r137+
-        const fairyGrp = new THREE.Group();
-        const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.8, 1.5, 4, 8), new THREE.MeshLambertMaterial({color: 0x8e44ad})); 
-        const head = new THREE.Mesh(new THREE.SphereGeometry(0.6), new THREE.MeshLambertMaterial({color: 0xffd54f})); head.position.y = 1.2;
-        const wingGeo = new THREE.CircleGeometry(0.8, 32, 0, Math.PI);
-        const wingMat = new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0.6, side:THREE.DoubleSide});
-        const lWing = new THREE.Mesh(wingGeo, wingMat); lWing.position.set(-0.6, 0.8, -0.3); lWing.rotation.y = 0.5;
-        const rWing = new THREE.Mesh(wingGeo, wingMat); rWing.position.set(0.6, 0.8, -0.3); rWing.rotation.y = -0.5;
-        fairyGrp.add(body, head, lWing, rWing);
-        
-        // Position it at the end
-        fairyGrp.position.set(0, -5, -240); 
-        scene.add(fairyGrp);
 
         // --- INTERACTION ---
         const raycaster = new THREE.Raycaster();
@@ -330,12 +334,7 @@
         }
 
         window.addEventListener('click', e => onInteract(e.clientX, e.clientY));
-        window.addEventListener('touchstart', e => {
-            if(e.touches.length === 1) {
-                // simple tap logic
-            }
-        });
-
+        
         // --- SCROLL & ANIMATION ---
         let scrollY = 0;
         const maxScroll = 260; 
@@ -348,9 +347,8 @@
 
             if(scrollY > 230) {
                 document.getElementById('letter-modal').classList.add('visible');
-                // Simple animation without GSAP to prevent crash
-                const fPos = fairyGrp.position.y;
-                if(fPos < 0) fairyGrp.position.y += 0.1; 
+                // Simple float up
+                if(fairyGrp.position.y < 0) fairyGrp.position.y += 0.05;
             }
         }
         
@@ -375,10 +373,12 @@
             camera.position.z += (targetZ - camera.position.z)*0.05;
 
             // Fairy Flap
-            const wingSpeed = time * 15;
-            fairyGrp.children[2].rotation.z = Math.sin(wingSpeed)*0.6;
-            fairyGrp.children[3].rotation.z = -Math.sin(wingSpeed)*0.6;
-            if(scrollY < 230) fairyGrp.position.y += Math.sin(time*3)*0.005; // Bob only if not rising
+            if(fairyGrp) {
+                const wingSpeed = time * 15;
+                fairyGrp.children[2].rotation.z = Math.sin(wingSpeed)*0.6;
+                fairyGrp.children[3].rotation.z = -Math.sin(wingSpeed)*0.6;
+                if(scrollY < 230) fairyGrp.position.y += Math.sin(time*3)*0.005; 
+            }
 
             if(isStarted){
                 groups.forEach((g,i)=>{
@@ -406,7 +406,6 @@
             }
             renderer.render(scene, camera);
         }
-        animate();
 
         window.addEventListener('resize', ()=>{
             camera.aspect=window.innerWidth/window.innerHeight;
