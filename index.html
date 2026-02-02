@@ -3,23 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>100 Days Museum (Remastered)</title>
+    <title>100 Days Museum (Explorer Edition)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Lato:wght@300;400;700&display=swap');
 
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
-            background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364); /* Deep Space Background */
+            background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
             font-family: 'Lato', sans-serif;
             user-select: none; -webkit-user-select: none;
         }
 
-        /* --- UI OVERLAYS --- */
+        /* UI LAYER */
         #ui-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10;
             pointer-events: none;
-            display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
-            padding-bottom: 80px;
+        }
+
+        /* NAVIGATION BUTTONS (The "Island Hoppers") */
+        .nav-btn {
+            position: absolute; bottom: 40px; 
+            background: rgba(15, 15, 20, 0.8); color: #d4af37;
+            border: 1px solid #d4af37; padding: 15px 30px;
+            font-family: 'Playfair Display', serif; font-size: 1.2rem;
+            cursor: pointer; pointer-events: auto; border-radius: 50px;
+            transition: all 0.3s ease; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-transform: uppercase; letter-spacing: 2px;
+        }
+        .nav-btn:hover { background: #d4af37; color: #fff; transform: translateY(-3px); }
+        #prev-btn { left: 40px; display: none; } /* Hidden at start */
+        #next-btn { right: 40px; }
+
+        /* HEADER INFO */
+        #header-info {
+            position: absolute; top: 40px; left: 50%; transform: translateX(-50%);
+            text-align: center; width: 80%; pointer-events: none;
+            transition: opacity 0.5s;
+        }
+        #header-info h1 {
+            font-family: 'Playfair Display', serif; font-size: 3rem; margin: 0;
+            color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        #header-info p {
+            font-size: 1rem; color: #d4af37; letter-spacing: 3px; text-transform: uppercase; margin-top: 10px; font-weight: bold;
         }
 
         /* START SCREEN */
@@ -31,59 +57,29 @@
         }
         #huzzah-img {
             width: 280px; border-radius: 20px; box-shadow: 0 30px 60px rgba(0,0,0,0.3);
-            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: transform 0.5s;
         }
         #huzzah-img:hover { transform: scale(1.05) rotate(2deg); }
-        
         .click-hint {
             margin-top: 30px; font-family: 'Playfair Display', serif; font-style: italic;
             color: #d4af37; font-size: 1.5rem; animation: pulse 2s infinite; font-weight: bold;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         #status-text { font-size: 0.9rem; color: #888; margin-top: 10px; font-weight: 300; }
 
-        /* MUSEUM PLAQUE (FANCY) */
-        .museum-plaque {
-            background: rgba(15, 15, 20, 0.85); /* Dark Glass */
-            backdrop-filter: blur(10px);
-            padding: 25px 50px;
-            border-radius: 2px;
-            border-top: 1px solid rgba(212, 175, 55, 0.5); /* Gold border top */
-            border-bottom: 1px solid rgba(212, 175, 55, 0.5);
-            text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            margin-bottom: 40px;
-            opacity: 0; transform: translateY(40px); transition: all 1s ease;
-            max-width: 600px;
-        }
-        .museum-plaque.active { opacity: 1; transform: translateY(0); }
-        .museum-plaque h2 {
-            font-family: 'Playfair Display', serif; font-size: 3rem; margin: 0;
-            color: #fff; letter-spacing: 1px;
-            text-shadow: 0 2px 20px rgba(255,255,255,0.2);
-        }
-        .museum-plaque p {
-            font-size: 0.9rem; letter-spacing: 4px; text-transform: uppercase;
-            color: #d4af37; margin-top: 10px; font-weight: bold;
-        }
-
-        /* LETTER MODAL (ELEGANT) */
+        /* LETTER MODAL */
         #letter-modal {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 90%; max-width: 550px; 
-            background: #fffdf5 url('https://www.transparenttextures.com/patterns/cream-paper.png');
-            padding: 50px; border-radius: 5px; box-shadow: 0 30px 80px rgba(0,0,0,0.6);
-            border: 4px double #d4af37;
-            z-index: 200; text-align: center; opacity: 0; pointer-events: none;
+            background: #fffdf5; padding: 50px; border-radius: 5px; box-shadow: 0 30px 80px rgba(0,0,0,0.8);
+            border: 4px double #d4af37; z-index: 200; text-align: center; opacity: 0; pointer-events: none;
             transition: opacity 1.5s; display: none;
         }
         #letter-modal.visible { opacity: 1; pointer-events: auto; display: block; }
         .letter-content h3 { font-family: 'Playfair Display', serif; font-size: 2.5rem; color: #333; margin-bottom: 30px; }
-        .letter-content p { font-size: 1.2rem; line-height: 2; color: #444; margin-bottom: 40px; font-family: 'Playfair Display', serif; }
+        .letter-content p { font-size: 1.2rem; line-height: 2; color: #444; margin-bottom: 40px; }
         .close-btn {
             background: transparent; color: #d4af37; border: 1px solid #d4af37; padding: 12px 40px;
             border-radius: 50px; cursor: pointer; font-size: 0.9rem; font-weight: bold; transition: all 0.3s;
-            text-transform: uppercase; letter-spacing: 2px;
         }
         .close-btn:hover { background: #d4af37; color: white; }
 
@@ -96,19 +92,17 @@
         }
         #zoom-overlay.active { opacity: 1; }
         #zoom-img { 
-            max-width: 85%; max-height: 80%; 
-            border: 15px solid #fff; 
-            box-shadow: 0 0 80px rgba(0,0,0,0.8); 
-            cursor: default; 
+            max-width: 85%; max-height: 80%; border: 15px solid #fff; 
+            box-shadow: 0 0 80px rgba(0,0,0,0.8); cursor: default; 
         }
         #close-hint { color: #888; margin-top: 25px; font-size: 0.8rem; letter-spacing: 3px; }
 
-        /* PROGRESS BAR */
-        #progress-container {
-            position: absolute; top: 0; left: 0; width: 100%; height: 3px; z-index: 15;
-            background: rgba(255,255,255,0.1);
+        /* TUTORIAL OVERLAY */
+        #tutorial {
+            position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%);
+            color: rgba(255,255,255,0.6); font-size: 0.9rem; letter-spacing: 1px;
+            pointer-events: none; opacity: 0; transition: opacity 1s;
         }
-        #progress-bar { width: 0%; height: 100%; background: #d4af37; transition: width 0.1s; box-shadow: 0 0 10px #d4af37; }
 
         @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
         
@@ -124,16 +118,18 @@
         <img id="huzzah-img" src="huzzah.gif" alt="HUZZAH" 
              onerror="this.src='https://media.giphy.com/media/MdGZp0GkF2L7i/giphy.gif'">
         <div class="click-hint" id="start-btn-text">LOADING...</div>
-        <div id="status-text">Choonsik is preparing the gallery...</div>
+        <div id="status-text">Choonsik is arranging the exhibits...</div>
     </div>
 
     <div id="ui-layer">
-        <div id="chapter-text" class="museum-plaque">
-            <h2 id="chap-head">Title</h2>
-            <p id="chap-sub">Subtitle</p>
+        <div id="header-info">
+            <h1 id="chap-head">The Birthday</h1>
+            <p id="chap-sub">Green Cakes & Red Lights</p>
         </div>
+        <div id="tutorial">DRAG TO EXPLORE • SCROLL TO ZOOM</div>
+        <button id="prev-btn" class="nav-btn" onclick="prevMemory()">Previous</button>
+        <button id="next-btn" class="nav-btn" onclick="nextMemory()">Next Memory</button>
     </div>
-    <div id="progress-container"><div id="progress-bar"></div></div>
 
     <div id="letter-modal">
         <div class="letter-content">
@@ -148,7 +144,7 @@
                 <br>
                 I love you.
             </p>
-            <button class="close-btn" onclick="event.stopPropagation(); document.getElementById('letter-modal').classList.remove('visible')">Close Letter</button>
+            <button class="close-btn" onclick="document.getElementById('letter-modal').classList.remove('visible')">Close Letter</button>
         </div>
     </div>
 
@@ -161,6 +157,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
     <script>
         // --- STARTUP ---
@@ -170,7 +167,7 @@
 
         window.onload = function() {
             isReady = true;
-            document.getElementById('start-btn-text').innerText = "ENTER THE GALLERY";
+            document.getElementById('start-btn-text').innerText = "ENTER MUSEUM";
             document.getElementById('start-btn-text').style.color = "#d4af37";
             document.getElementById('status-text').innerText = "Ready!";
         };
@@ -181,6 +178,10 @@
             const screen = document.getElementById('start-screen');
             screen.style.opacity = 0;
             setTimeout(() => { screen.style.display = 'none'; }, 1500);
+            
+            // Show tutorial
+            setTimeout(() => { document.getElementById('tutorial').style.opacity = 1; }, 2000);
+            setTimeout(() => { document.getElementById('tutorial').style.opacity = 0; }, 8000);
         }
 
         function closeZoom() {
@@ -189,112 +190,110 @@
             setTimeout(() => { z.style.display = 'none'; }, 300);
         }
 
-        // --- CONFIG: THE JOURNEY MAP ---
-        // Spaced out MUCH further to prevent overlapping/clumping
+        // --- CONFIG: MEMORY ISLANDS ---
+        // Coordinates for each island in the vast 3D space
         const memories = [
             { 
                 id: 'birthday', 
                 title: "The Birthday", 
                 sub: "Green Cakes & Red Lights", 
-                color: 0xff4081, // Hot Pink Glow
-                pos: { x: 0, y: 0, z: -40 }, 
+                color: 0xff4081, 
+                pos: { x: 0, y: 0, z: 0 }, 
                 photos: ["10153", "10157", "10150", "10164"] 
             },
             { 
                 id: 'stream', 
                 title: "Cheonggyecheon", 
                 sub: "Lights & Tacos", 
-                color: 0x00e5ff, // Cyan Glow
-                pos: { x: -60, y: 10, z: -100 }, 
+                color: 0x00e5ff, 
+                pos: { x: -100, y: 20, z: -100 }, 
                 photos: ["11250", "11253", "11221", "11255", "11215", "11214"] 
             },
             { 
                 id: 'daegu', 
                 title: "Daegu Christmas", 
                 sub: "Cozy Winter Vibes", 
-                color: 0x00e676, // Green Glow
-                pos: { x: 40, y: -10, z: -180 }, 
+                color: 0x00e676, 
+                pos: { x: 100, y: -20, z: -200 }, 
                 photos: ["11525", "11528", "11519", "11547", "11538", "11544"] 
             },
             { 
                 id: 'study', 
                 title: "Sinchon Scholars", 
                 sub: "Notebooks & Sweet Potatoes", 
-                color: 0xffd740, // Amber Glow
-                pos: { x: 0, y: 20, z: -260 }, 
+                color: 0xffd740, 
+                pos: { x: 0, y: 40, z: -300 }, 
                 photos: ["11967", "11964", "11969", "11968"] 
             },
             { 
                 id: 'pohang', 
                 title: "Pohang Recovery", 
                 sub: "From ER to Ocean Blue", 
-                color: 0x7c4dff, // Purple Glow
-                pos: { x: 0, y: 0, z: -350 }, 
+                color: 0x7c4dff, 
+                pos: { x: 0, y: 0, z: -450 }, 
                 photos: ["12851", "12900", "12913", "13110", "13069", "12969", "12999", "13051", "13098", "13118"] 
             }
         ];
 
         const totalPhotos = memories.reduce((acc, val) => acc + val.photos.length, 0);
+        let currentMemoryIndex = 0;
 
         // --- 3D SCENE ---
         const scene = new THREE.Scene();
-        // Remove simple background color, using Fog for depth
-        scene.fog = new THREE.FogExp2(0x111116, 0.008); 
+        scene.fog = new THREE.FogExp2(0x111116, 0.005); 
 
-        const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 2000);
-        camera.position.set(0, 0, 50); // Start FAR back
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 3000);
+        camera.position.set(0, 5, 40); // Initial look position
 
         const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Softer shadows
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-        // --- LIGHTING (DRAMATIC) ---
+        // CONTROLS
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 10;
+        controls.maxDistance = 100;
+        controls.enablePan = true;
+
+        // LIGHTING
         const amb = new THREE.AmbientLight(0xffffff, 0.4); scene.add(amb);
-        
-        // Key Light
         const spot = new THREE.SpotLight(0xffd700, 1.2);
         spot.position.set(50, 100, 50);
         spot.castShadow = true;
-        spot.shadow.mapSize.width = 2048;
-        spot.shadow.mapSize.height = 2048;
         scene.add(spot);
 
-        // --- STARFIELD ---
+        // STARFIELD
         function createStars() {
             const geo = new THREE.BufferGeometry();
-            const count = 2000;
+            const count = 3000;
             const pos = new Float32Array(count * 3);
-            for(let i=0; i<count*3; i++) {
-                pos[i] = (Math.random()-0.5) * 800;
-            }
+            for(let i=0; i<count*3; i++) pos[i] = (Math.random()-0.5) * 1500;
             geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
             const mat = new THREE.PointsMaterial({size: 0.8, color: 0xffffff, transparent: true, opacity: 0.8});
-            const stars = new THREE.Points(geo, mat);
-            scene.add(stars);
+            scene.add(new THREE.Points(geo, mat));
         }
         createStars();
 
-        // --- CHOONSIK (2.5D SPRITE) ---
+        // CHOONSIK
         let choonsikSprite;
         function createChoonsik() {
             const loader = new THREE.TextureLoader();
-            // Default to online if local fails, but try local 'choonsik.png' first
             const tex = loader.load('choonsik.png', undefined, undefined, () => {
-                // Fallback URL if local missing
-                return loader.load('https://cdn-icons-png.flaticon.com/512/4712/4712109.png'); // Generic cute bear fallback
+                return loader.load('https://cdn-icons-png.flaticon.com/512/4712/4712109.png');
             });
-            
             const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide });
-            const geo = new THREE.PlaneGeometry(3, 3); // 3x3 units size
+            const geo = new THREE.PlaneGeometry(4, 4);
             choonsikSprite = new THREE.Mesh(geo, mat);
-            choonsikSprite.position.set(3, 0, 40);
+            choonsikSprite.position.set(5, 0, 5);
             scene.add(choonsikSprite);
         }
         createChoonsik();
 
-        // --- GALLERY BUILDER ---
+        // GALLERY BUILDER
         const textureLoader = new THREE.TextureLoader();
         const photoMeshes = [];
 
@@ -302,84 +301,71 @@
             const extensions = ['.jpg', '.JPG', '.jpeg', '.webp', '.png'];
             function attempt(index) {
                 if(index >= extensions.length) {
-                    mesh.material.color.setHex(0x333333); // Dark Grey on fail
+                    mesh.material.color.setHex(0x333333);
                     return;
                 }
                 const url = baseName + extensions[index];
                 textureLoader.load(url, (tex) => {
                     const aspect = tex.image.width / tex.image.height;
-                    const w = 7; const h = w/aspect; // Large photos
+                    const w = 8; const h = w/aspect;
                     mesh.geometry.dispose();
                     mesh.geometry = new THREE.PlaneGeometry(w, h);
                     mesh.material.map = tex;
                     mesh.material.color.setHex(0xffffff);
                     mesh.material.needsUpdate = true;
                     
-                    // Re-adjust frame to match new size
                     mesh.children[0].geometry.dispose();
-                    mesh.children[0].geometry = new THREE.BoxGeometry(w+0.5, h+0.5, 0.2);
+                    mesh.children[0].geometry = new THREE.BoxGeometry(w+0.6, h+0.6, 0.3);
                     
                     mesh.userData.src = url;
                     loadedCount++;
-                    document.getElementById('status-text').innerText = `Curating Masterpieces: ${loadedCount}/${totalPhotos}`;
+                    document.getElementById('status-text').innerText = `Curating Museum: ${loadedCount}/${totalPhotos}`;
                 }, undefined, () => attempt(index + 1));
             }
             attempt(0);
         }
 
+        // Build Islands
         memories.forEach((mem, index) => {
             const group = new THREE.Group();
             group.position.set(mem.pos.x, mem.pos.y, mem.pos.z);
 
-            // 1. Floating Platform (Glassy)
-            const platGeo = new THREE.CylinderGeometry(20, 18, 1, 64);
-            const platMat = new THREE.MeshPhongMaterial({ 
-                color: 0x222222, 
-                specular: 0x111111,
-                shininess: 100,
-                transparent: true, opacity: 0.9 
-            });
+            // 1. Platform
+            const platGeo = new THREE.CylinderGeometry(25, 23, 1, 64);
+            const platMat = new THREE.MeshPhongMaterial({ color: 0x222222, shininess: 100, opacity: 0.9, transparent: true });
             const platform = new THREE.Mesh(platGeo, platMat);
-            platform.position.y = -8;
+            platform.position.y = -6;
             platform.receiveShadow = true;
             group.add(platform);
 
-            // 2. Local Light (Colored Glow)
-            const light = new THREE.PointLight(mem.color, 1, 60);
-            light.position.set(0, 10, 0);
+            // 2. Light
+            const light = new THREE.PointLight(mem.color, 1.5, 80);
+            light.position.set(0, 20, 0);
             group.add(light);
 
-            // 3. Photos (Gallery Wall Arrangement)
+            // 3. Photos - WIDE ARC ARRANGEMENT
             const count = mem.photos.length;
-            const radius = 12;
-            const angleStep = Math.PI / (count + 2); // Spread widely
+            const radius = 16; // Much larger radius for spacing
+            // Total arc width: 120 degrees (2/3 PI). Start from -60 to +60
+            const totalArc = Math.PI * 0.8; 
+            const startAngle = -totalArc / 2;
+            const angleStep = totalArc / (count - 1 || 1); 
 
             mem.photos.forEach((baseName, i) => {
-                const angle = Math.PI + (Math.PI/2) - (angleStep * (i + 1.5)); 
-                const x = Math.cos(angle) * radius;
-                const z = Math.sin(angle) * radius * 0.8;
+                // Calculate angle: center photo is at 0
+                let angle = startAngle + (angleStep * i);
+                if (count === 1) angle = 0;
 
-                // Canvas Mesh
-                const mesh = new THREE.Mesh(
-                    new THREE.PlaneGeometry(5, 3.5), 
-                    new THREE.MeshLambertMaterial({ color: 0x444444 }) // Dark placeholder
-                );
+                const x = Math.sin(angle) * radius;
+                const z = Math.cos(angle) * radius - 10; // Push back slightly
+
+                const mesh = new THREE.Mesh(new THREE.PlaneGeometry(5, 3.5), new THREE.MeshLambertMaterial({ color: 0x444444 }));
                 
-                // Randomize height slightly for "Collage" feel
-                const hVar = (Math.random()-0.5) * 4;
-                mesh.position.set(x, hVar, z);
-                mesh.lookAt(0, 0, 0); // Look at center of platform
-                // Flip 180 because lookAt points -Z
-                mesh.rotation.y += Math.PI; 
-                mesh.castShadow = true;
-
-                // Gold Frame (Thick BoxGeometry)
-                const frameMat = new THREE.MeshStandardMaterial({
-                    color: 0xffd700,
-                    metalness: 0.8,
-                    roughness: 0.2
-                });
-                const frame = new THREE.Mesh(new THREE.BoxGeometry(5.4, 3.9, 0.2), frameMat);
+                mesh.position.set(x, (Math.random()-0.5)*2, z);
+                mesh.lookAt(0, 0, 40); // Look at the viewer arrival point (approx)
+                
+                // Add Frame
+                const frame = new THREE.Mesh(new THREE.BoxGeometry(5.4, 3.9, 0.2), new THREE.MeshStandardMaterial({color: 0xffd700, metalness: 0.8, roughness: 0.2}));
                 frame.position.z = -0.15;
                 mesh.add(frame);
 
@@ -388,19 +374,94 @@
                 tryLoadTexture(baseName, mesh);
             });
 
-            // 4. Floating Particles (Magical Dust)
-            const partGeo = new THREE.BufferGeometry();
-            const pCount = 30;
-            const pPos = new Float32Array(pCount*3);
-            for(let k=0; k<pCount*3; k++) pPos[k] = (Math.random()-0.5)*25;
-            partGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-            const partMat = new THREE.PointsMaterial({color: mem.color, size: 0.3, transparent:true, opacity:0.6});
-            const particles = new THREE.Points(partGeo, partMat);
-            particles.position.y = 5;
-            group.add(particles);
-
             scene.add(group);
         });
+
+        // --- NAVIGATION LOGIC ---
+        function updateUI(index) {
+            const mem = memories[index];
+            const head = document.getElementById('chap-head');
+            const sub = document.getElementById('chap-sub');
+            
+            // Fade out, change text, fade in
+            const info = document.getElementById('header-info');
+            info.style.opacity = 0;
+            setTimeout(() => {
+                head.innerText = mem.title;
+                sub.innerText = mem.sub;
+                info.style.opacity = 1;
+            }, 500);
+
+            // Button visibility
+            document.getElementById('prev-btn').style.display = index === 0 ? 'none' : 'block';
+            
+            const nextBtn = document.getElementById('next-btn');
+            if(index === memories.length - 1) {
+                nextBtn.innerText = "Open Letter";
+                nextBtn.onclick = openLetter;
+            } else {
+                nextBtn.innerText = "Next Memory";
+                nextBtn.onclick = nextMemory;
+            }
+        }
+
+        function flyToMemory(index) {
+            const mem = memories[index];
+            
+            // Target position: Slightly in front of the island (z + 40)
+            const targetPos = { x: mem.pos.x, y: mem.pos.y + 5, z: mem.pos.z + 40 };
+            const lookTarget = { x: mem.pos.x, y: mem.pos.y, z: mem.pos.z };
+
+            // Animate Camera
+            gsap.to(camera.position, {
+                x: targetPos.x,
+                y: targetPos.y,
+                z: targetPos.z,
+                duration: 2,
+                ease: "power2.inOut",
+                onUpdate: () => controls.update() // Keep controls sync
+            });
+
+            // Animate Controls Target (Where we orbit around)
+            gsap.to(controls.target, {
+                x: lookTarget.x,
+                y: lookTarget.y,
+                z: lookTarget.z,
+                duration: 2,
+                ease: "power2.inOut"
+            });
+
+            // Move Choonsik
+            if(choonsikSprite) {
+                gsap.to(choonsikSprite.position, {
+                    x: mem.pos.x + 8,
+                    y: mem.pos.y,
+                    z: mem.pos.z + 5,
+                    duration: 2.5,
+                    ease: "power1.inOut"
+                });
+            }
+
+            updateUI(index);
+        }
+
+        window.nextMemory = function() {
+            if(currentMemoryIndex < memories.length - 1) {
+                currentMemoryIndex++;
+                flyToMemory(currentMemoryIndex);
+            }
+        }
+
+        window.prevMemory = function() {
+            if(currentMemoryIndex > 0) {
+                currentMemoryIndex--;
+                flyToMemory(currentMemoryIndex);
+            }
+        }
+
+        window.openLetter = function() {
+            document.getElementById('letter-modal').classList.add('visible');
+        }
 
         // --- INTERACTION ---
         const raycaster = new THREE.Raycaster();
@@ -408,143 +469,44 @@
         
         window.addEventListener('click', e => {
             if(!isStarted) return;
-            // UI Blocking
+            // Ignore UI clicks
+            if(e.target.closest('button')) return;
             if(document.getElementById('letter-modal').classList.contains('visible')) return;
-            const zoom = document.getElementById('zoom-overlay');
-            if(zoom.style.display === 'flex' && zoom.classList.contains('active')) return;
-
+            
+            // Calculate mouse pos for raycaster
             mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            
             raycaster.setFromCamera(mouse, camera);
             const intersects = raycaster.intersectObjects(photoMeshes);
-            if(intersects.length > 0 && intersects[0].object.userData.src) {
-                document.getElementById('zoom-img').src = intersects[0].object.userData.src;
-                zoom.style.display = 'flex';
-                // Small delay for fade in
-                setTimeout(() => zoom.classList.add('active'), 10);
+            if(intersects.length > 0) {
+                const src = intersects[0].object.userData.src;
+                if(src) {
+                    const zoom = document.getElementById('zoom-overlay');
+                    document.getElementById('zoom-img').src = src;
+                    zoom.style.display = 'flex';
+                    setTimeout(() => zoom.classList.add('active'), 10);
+                }
             }
         });
 
-        // --- SCROLL LOGIC ---
-        let scrollProgress = 0;
-        let scrollTarget = 0;
-        
-        window.addEventListener('wheel', e => {
-            if(!isStarted) return;
-            scrollTarget += e.deltaY * 0.0003; // Slower, smoother
-            scrollTarget = Math.max(0, Math.min(scrollTarget, 1));
-        });
-        
-        let touchStart = 0;
-        window.addEventListener('touchstart', e => touchStart = e.touches[0].clientY);
-        window.addEventListener('touchmove', e => {
-            if(!isStarted) return;
-            const delta = touchStart - e.touches[0].clientY;
-            scrollTarget += delta * 0.001;
-            scrollTarget = Math.max(0, Math.min(scrollTarget, 1));
-            touchStart = e.touches[0].clientY;
-        });
+        // --- ANIMATION ---
+        const clock = new THREE.Clock();
 
-        // --- ANIMATION LOOP ---
-        const plaqueHead = document.getElementById('chap-head');
-        const plaqueSub = document.getElementById('chap-sub');
-        const plaqueDiv = document.getElementById('chapter-text');
-        const progressBar = document.getElementById('progress-bar');
-
-        // Bezier Curve points for camera path (Start -> Mem1 -> Mem2 ...)
-        // We simply lerp between "Waypoints" which are slightly offset from the platforms
-        function getCameraTarget(t) {
-            // Path points: Start -> Mem1 Offset -> Mem2 Offset ...
-            const points = [
-                {x:0, y:0, z:50}, // Start
-                {x:0, y:5, z:-10}, // Before Mem 1
-                {x:-20, y:8, z:-70}, // Before Mem 2
-                {x:30, y:-5, z:-150}, // Before Mem 3
-                {x:0, y:15, z:-230}, // Before Mem 4
-                {x:0, y:0, z:-320}  // At Mem 5 (End)
-            ];
-
-            const maxIndex = points.length - 1;
-            const scaledT = t * maxIndex;
-            const idx = Math.floor(scaledT);
-            const nextIdx = Math.min(idx + 1, maxIndex);
-            const ratio = scaledT - idx;
-
-            const p1 = points[idx];
-            const p2 = points[nextIdx];
-
-            return {
-                x: p1.x + (p2.x - p1.x) * ratio,
-                y: p1.y + (p2.y - p1.y) * ratio,
-                z: p1.z + (p2.z - p1.z) * ratio
-            };
-        }
-
-        function animate(){
+        function animate() {
             requestAnimationFrame(animate);
             const time = clock.getElapsedTime();
+            
+            controls.update();
 
-            if(isStarted) {
-                scrollProgress += (scrollTarget - scrollProgress) * 0.03; // Heavy momentum
-
-                // 1. Move Camera
-                const camPos = getCameraTarget(scrollProgress);
-                camera.position.set(camPos.x, camPos.y, camPos.z);
-
-                // 2. Camera LookAt
-                // Look slightly ahead on the Z axis, but smooth
-                camera.lookAt(camPos.x * 0.5, camPos.y * 0.5, camPos.z - 50);
-
-                // 3. Move Choonsik (Paper Sprite)
-                if(choonsikSprite) {
-                    // He floats to the right of the camera
-                    const offset = new THREE.Vector3(4, -1, -8);
-                    offset.applyMatrix4(camera.matrixWorld);
-                    
-                    // Smooth lerp to target position
-                    choonsikSprite.position.lerp(offset, 0.05);
-                    choonsikSprite.lookAt(camera.position); // Always face camera (Billboard)
-                    
-                    // Cute bobbing
-                    choonsikSprite.position.y += Math.sin(time * 4) * 0.02;
-                }
-
-                // 4. Update Texts (Strict Distance Check)
-                let activeIndex = -1;
-                memories.forEach((mem, i) => {
-                    const d = camera.position.distanceTo(new THREE.Vector3(mem.pos.x, mem.pos.y, mem.pos.z));
-                    if(d < 45) activeIndex = i; // Only show if closer than 45 units
-                });
-
-                if(activeIndex !== -1) {
-                    const mem = memories[activeIndex];
-                    if(plaqueHead.innerText !== mem.title) {
-                        plaqueDiv.classList.remove('active');
-                        setTimeout(() => {
-                            plaqueHead.innerText = mem.title;
-                            plaqueSub.innerText = mem.sub;
-                            plaqueDiv.classList.add('active');
-                        }, 500);
-                    } else if(!plaqueDiv.classList.contains('active')) {
-                        plaqueDiv.classList.add('active');
-                    }
-                } else {
-                    // In between memories? Hide text
-                    plaqueDiv.classList.remove('active');
-                }
-
-                // 5. Letter Trigger
-                if(scrollProgress > 0.99) {
-                    document.getElementById('letter-modal').classList.add('visible');
-                }
-
-                progressBar.style.width = (scrollProgress * 100) + "%";
+            // Choonsik Idle Animation
+            if(choonsikSprite) {
+                choonsikSprite.position.y += Math.sin(time * 3) * 0.02;
+                choonsikSprite.lookAt(camera.position); // Always face user
             }
 
             renderer.render(scene, camera);
         }
-        
-        const clock = new THREE.Clock();
         animate();
 
         window.addEventListener('resize', ()=>{
