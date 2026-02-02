@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>100 Days with Kaitlin</title>
+    <title>100 Days Museum with Choonsik</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Lato:wght@300;400&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Lato:wght@300;400;700&display=swap');
 
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
@@ -13,17 +13,12 @@
             user-select: none; -webkit-user-select: none;
         }
 
-        /* 디버그 창 (문제 발생시 확인용) */
-        #debug-console {
-            position: absolute; top: 0; left: 0; width: 100%; height: auto; max-height: 100px;
-            background: rgba(255, 0, 0, 0.8); color: white; padding: 10px;
-            font-size: 14px; z-index: 9999; display: none; text-align: center;
-        }
-
-        /* UI OVERLAYS */
+        /* UI LAYERS */
         #ui-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10;
-            pointer-events: none; display: flex; justify-content: center; align-items: center;
+            pointer-events: none; /* Let clicks pass through to 3D */
+            display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+            padding-bottom: 50px;
         }
 
         /* START SCREEN */
@@ -41,61 +36,75 @@
         
         .click-hint {
             margin-top: 25px; font-family: 'Playfair Display', serif; font-style: italic;
-            color: #d4af37; font-size: 1.2rem; animation: pulse 2s infinite; font-weight: bold;
+            color: #d4af37; font-size: 1.5rem; animation: pulse 2s infinite; font-weight: bold;
         }
-        #status-text { font-size: 0.8rem; color: #aaa; margin-top: 10px; }
+        #status-text { font-size: 0.9rem; color: #aaa; margin-top: 10px; }
 
-        /* CHAPTERS */
-        .chapter-container {
-            position: absolute; bottom: 15%; text-align: center; opacity: 0;
-            transform: translateY(30px); transition: all 1s ease; width: 100%;
+        /* CHAPTER TITLES (Museum Plaque Style) */
+        .museum-plaque {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px 40px;
+            border-radius: 2px;
+            border: 1px solid #d4af37;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 40px;
+            opacity: 0; transform: translateY(20px); transition: all 0.8s ease;
+            max-width: 80%;
         }
-        .chapter-container.active { opacity: 1; transform: translateY(0); }
-        .chapter-container h2 {
-            font-family: 'Playfair Display', serif; font-size: 3.5rem; margin: 0;
-            background: -webkit-linear-gradient(45deg, #333, #666);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            text-shadow: 0 5px 15px rgba(0,0,0,0.1); padding: 0 20px;
+        .museum-plaque.active { opacity: 1; transform: translateY(0); }
+        .museum-plaque h2 {
+            font-family: 'Playfair Display', serif; font-size: 2.5rem; margin: 0;
+            color: #333; letter-spacing: -1px;
         }
-        .chapter-container p {
-            font-size: 1rem; letter-spacing: 4px; text-transform: uppercase;
-            color: #d4af37; margin-top: 10px; font-weight: bold;
+        .museum-plaque p {
+            font-size: 0.9rem; letter-spacing: 3px; text-transform: uppercase;
+            color: #d4af37; margin-top: 5px; font-weight: bold;
         }
 
         /* LETTER MODAL */
         #letter-modal {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 85%; max-width: 500px; background: rgba(255,255,255,0.98);
-            padding: 40px; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+            width: 90%; max-width: 500px; background: #fffdf5;
+            padding: 40px; border-radius: 5px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            border: 2px solid #d4af37;
             z-index: 200; text-align: center; opacity: 0; pointer-events: none;
             transition: opacity 1s; display: none;
         }
         #letter-modal.visible { opacity: 1; pointer-events: auto; display: block; }
-        .letter-content h3 { font-family: 'Playfair Display', serif; font-size: 2rem; color: #d4af37; margin-bottom: 20px; }
-        .letter-content p { font-size: 1rem; line-height: 1.6; color: #444; margin-bottom: 30px; }
+        .letter-content h3 { font-family: 'Playfair Display', serif; font-size: 2rem; color: #333; margin-bottom: 20px; }
+        .letter-content p { font-size: 1.1rem; line-height: 1.8; color: #555; margin-bottom: 30px; font-family: 'Lato', sans-serif; }
         .close-btn {
-            background: #d4af37; color: white; border: none; padding: 12px 30px;
-            border-radius: 30px; cursor: pointer; font-size: 1rem; font-weight: bold;
+            background: transparent; color: #d4af37; border: 1px solid #d4af37; padding: 10px 30px;
+            border-radius: 30px; cursor: pointer; font-size: 0.9rem; font-weight: bold; transition: all 0.3s;
         }
+        .close-btn:hover { background: #d4af37; color: white; }
 
-        /* ZOOM OVERLAY */
+        /* ZOOM OVERLAY - Improved Close Interaction */
         #zoom-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 150; display: none;
+            background: rgba(0,0,0,0.92); z-index: 150; display: none;
             justify-content: center; align-items: center; cursor: zoom-out;
-            pointer-events: auto;
+            pointer-events: auto; flex-direction: column;
         }
-        #zoom-img { max-width: 95%; max-height: 90%; border: 4px solid white; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
+        #zoom-img { 
+            max-width: 90%; max-height: 80%; 
+            border: 10px solid white; 
+            box-shadow: 0 0 50px rgba(0,0,0,0.5); 
+            cursor: default; /* Don't show zoom-out cursor on image itself */
+        }
+        #close-hint { color: white; margin-top: 20px; font-size: 0.8rem; letter-spacing: 2px; opacity: 0.7; }
 
+        /* PROGRESS BAR */
         #progress-container {
-            position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
-            height: 150px; width: 3px; background: rgba(0,0,0,0.05);
+            position: absolute; top: 0; left: 0; width: 100%; height: 4px; z-index: 15;
         }
-        #progress-bar { width: 100%; height: 0%; background: #d4af37; transition: height 0.1s; border-radius: 3px; }
+        #progress-bar { width: 0%; height: 100%; background: #d4af37; transition: width 0.1s; }
 
         @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
         
         #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        #debug-console { display: none; } /* Hide debug in production */
     </style>
 </head>
 <body>
@@ -106,16 +115,16 @@
         <img id="huzzah-img" src="huzzah.gif" alt="HUZZAH" 
              onerror="this.src='https://media.giphy.com/media/MdGZp0GkF2L7i/giphy.gif'">
         <div class="click-hint" id="start-btn-text">LOADING...</div>
-        <div id="status-text">Connecting to memories...</div>
+        <div id="status-text">Choonsik is preparing the museum...</div>
     </div>
 
     <div id="ui-layer">
-        <div id="chapter-text" class="chapter-container">
+        <div id="chapter-text" class="museum-plaque">
             <h2 id="chap-head">Title</h2>
             <p id="chap-sub">Subtitle</p>
         </div>
-        <div id="progress-container"><div id="progress-bar"></div></div>
     </div>
+    <div id="progress-container"><div id="progress-bar"></div></div>
 
     <div id="letter-modal">
         <div class="letter-content">
@@ -130,173 +139,165 @@
                 <br>
                 I love you.
             </p>
-            <button class="close-btn" onclick="event.stopPropagation(); document.getElementById('letter-modal').classList.remove('visible')">Close</button>
+            <button class="close-btn" onclick="event.stopPropagation(); document.getElementById('letter-modal').classList.remove('visible')">Close Letter</button>
         </div>
     </div>
 
-    <div id="zoom-overlay" onclick="this.style.display='none'"><img id="zoom-img" src=""></div>
+    <div id="zoom-overlay" onclick="closeZoom()">
+        <img id="zoom-img" src="" onclick="event.stopPropagation()"> <div id="close-hint">CLICK ANYWHERE ELSE TO CLOSE</div>
+    </div>
+
     <div id="canvas-container"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 
     <script>
-        // --- 1. 라이브러리 로드 체크 (가장 중요) ---
-        window.addEventListener('load', function() {
-            if (typeof THREE === 'undefined') {
-                const debug = document.getElementById('debug-console');
-                debug.style.display = 'block';
-                debug.innerHTML = "CRITICAL ERROR: 3D Engine failed to load.<br>Please refresh the page.";
-                return;
-            }
-            initApp();
-        });
-
-        // --- GLOBAL VARIABLES ---
+        // --- STARTUP ---
         let isStarted = false;
-        let targetZ = 20;
+        let isReady = false;
         let loadedCount = 0;
-        
-        // --- CONFIG ---
-        const memories = [
-            { id: 'birthday', title: "The Birthday", sub: "Green Cakes & Red Lights", color: 0xffebee, z: 0, 
-              photos: ["10153", "10157", "10150", "10164"] },
-            { id: 'stream', title: "Cheonggyecheon", sub: "Lights, Coughing & Tacos", color: 0xe3f2fd, z: -50, 
-              photos: ["11250", "11253", "11221", "11255", "11215", "11214"] },
-            { id: 'daegu', title: "Daegu Christmas", sub: "Cozy Winter Vibes", color: 0xe8f5e9, z: -100, 
-              photos: ["11525", "11528", "11519", "11547", "11538", "11544"] },
-            { id: 'study', title: "Sinchon Scholars", sub: "Notebooks & Sweet Potatoes", color: 0xfff3e0, z: -150, 
-              photos: ["11967", "11964", "11969", "11968"] },
-            { id: 'pohang', title: "Pohang Recovery", sub: "From ER to Ocean Blue", color: 0xf3e5f5, z: -200, 
-              photos: ["12851", "12900", "12913", "13110", "13069", "12969", "12999", "13051", "13098", "13118"] }
-        ];
 
-        const totalPhotos = memories.reduce((acc, val) => acc + val.photos.length, 0);
-
-        // --- APP INITIALIZATION ---
-        function initApp() {
-            document.getElementById('start-btn-text').innerText = "CLICK TO START";
+        window.onload = function() {
+            isReady = true;
+            document.getElementById('start-btn-text').innerText = "CLICK TO START TOUR";
             document.getElementById('start-btn-text').style.color = "#d4af37";
             document.getElementById('status-text').innerText = "Ready!";
-            
-            init3D();
-        }
+        };
 
         function tryStart() {
-            if (typeof THREE === 'undefined') return;
+            if (!isReady) return;
             isStarted = true;
-            targetZ = 10;
             const screen = document.getElementById('start-screen');
             screen.style.opacity = 0;
             setTimeout(() => { screen.style.display = 'none'; }, 1000);
         }
 
+        function closeZoom() {
+            document.getElementById('zoom-overlay').style.display = 'none';
+        }
+
+        // --- CONFIG: THE JOURNEY MAP ---
+        // Each memory has a specific [X, Y, Z] coordinate in the 3D world
+        const memories = [
+            { 
+                id: 'birthday', 
+                title: "The Birthday", 
+                sub: "Green Cakes & Red Lights", 
+                color: 0xffebee, 
+                pos: { x: 0, y: 0, z: 0 }, 
+                lookAt: { x: 0, y: 0, z: -10 },
+                photos: ["10153", "10157", "10150", "10164"] 
+            },
+            { 
+                id: 'stream', 
+                title: "Cheonggyecheon", 
+                sub: "Lights & Tacos", 
+                color: 0xe3f2fd, 
+                pos: { x: -30, y: 5, z: -40 }, // Left Turn
+                lookAt: { x: -40, y: 5, z: -50 },
+                photos: ["11250", "11253", "11221", "11255", "11215", "11214"] 
+            },
+            { 
+                id: 'daegu', 
+                title: "Daegu Christmas", 
+                sub: "Cozy Winter Vibes", 
+                color: 0xe8f5e9, 
+                pos: { x: 20, y: -5, z: -80 }, // Right Turn & Down
+                lookAt: { x: 30, y: -5, z: -90 },
+                photos: ["11525", "11528", "11519", "11547", "11538", "11544"] 
+            },
+            { 
+                id: 'study', 
+                title: "Sinchon Scholars", 
+                sub: "Notebooks & Sweet Potatoes", 
+                color: 0xfff3e0, 
+                pos: { x: 0, y: 10, z: -120 }, // Center & Up
+                lookAt: { x: 0, y: 10, z: -130 },
+                photos: ["11967", "11964", "11969", "11968"] 
+            },
+            { 
+                id: 'pohang', 
+                title: "Pohang Recovery", 
+                sub: "From ER to Ocean Blue", 
+                color: 0xf3e5f5, 
+                pos: { x: 0, y: 0, z: -170 }, // Final Destination
+                lookAt: { x: 0, y: 0, z: -200 },
+                photos: ["12851", "12900", "12913", "13110", "13069", "12969", "12999", "13051", "13098", "13118"] 
+            }
+        ];
+
+        const totalPhotos = memories.reduce((acc, val) => acc + val.photos.length, 0);
+
         // --- 3D SCENE ---
-        let scene, camera, renderer, loader, groups = [], photoMeshes = [], fairyGrp;
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xfdfbfb);
+        scene.fog = new THREE.FogExp2(0xfdfbfb, 0.015);
 
-        function init3D() {
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xfdfbfb);
-            scene.fog = new THREE.FogExp2(0xfdfbfb, 0.02);
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, 30); // Start position
 
-            camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 1000);
-            camera.position.z = 20;
+        const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-            renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.shadowMap.enabled = true;
-            document.getElementById('canvas-container').appendChild(renderer.domElement);
+        // Lighting
+        const amb = new THREE.AmbientLight(0xffffff, 0.7); scene.add(amb);
+        const dir = new THREE.DirectionalLight(0xffd700, 0.8); 
+        dir.position.set(20,50,20); dir.castShadow=true; scene.add(dir);
 
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7); scene.add(ambientLight);
-            const dirLight = new THREE.DirectionalLight(0xffd700, 0.8); dirLight.position.set(10,20,10); dirLight.castShadow=true; scene.add(dirLight);
+        // --- CHOONSIK BUILDER ---
+        // Creating Choonsik using primitive shapes
+        function createChoonsik() {
+            const group = new THREE.Group();
+            const yellow = 0xffd54f;
+            const brown = 0x5d4037;
 
-            loader = new THREE.TextureLoader();
+            // Head
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.7, 32, 32), new THREE.MeshLambertMaterial({color: yellow}));
+            
+            // Ears (Brown rounded)
+            const lEar = new THREE.Mesh(new THREE.SphereGeometry(0.25), new THREE.MeshLambertMaterial({color: brown}));
+            lEar.position.set(-0.5, 0.5, 0);
+            const rEar = lEar.clone(); rEar.position.set(0.5, 0.5, 0);
 
-            // Build Memories
-            memories.forEach(mem => {
-                const grp = new THREE.Group();
-                grp.position.z = mem.z;
-                
-                mem.photos.forEach(baseName => {
-                    // Create Placeholder Mesh
-                    const geometry = new THREE.PlaneGeometry(5, 3.5);
-                    const material = new THREE.MeshLambertMaterial({ color: Math.random() * 0xffffff }); 
-                    const mesh = new THREE.Mesh(geometry, material);
-                    
-                    mesh.position.set((Math.random()-0.5)*18, (Math.random()-0.5)*10, Math.random()*4);
-                    mesh.rotation.z = (Math.random()-0.5)*0.4;
-                    mesh.castShadow = true; 
-                    mesh.receiveShadow = true;
-                    
-                    const frame = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 3.7), new THREE.MeshBasicMaterial({color:0xffffff}));
-                    frame.position.z = -0.05; 
-                    mesh.add(frame);
-                    
-                    grp.add(mesh);
-                    photoMeshes.push(mesh);
+            // Body (Cylinder)
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.7, 1.2, 32), new THREE.MeshLambertMaterial({color: yellow}));
+            body.position.y = -0.9;
 
-                    // Try loading texture
-                    tryLoadTexture(baseName, mesh);
-                });
+            // Muzzle (White)
+            const muzzle = new THREE.Mesh(new THREE.SphereGeometry(0.3), new THREE.MeshLambertMaterial({color: 0xffffff}));
+            muzzle.position.set(0, -0.1, 0.6);
+            muzzle.scale.set(1, 0.7, 0.5);
 
-                // Hearts
-                for(let i=0; i<5; i++) {
-                    addHeart(grp);
-                }
-                
-                scene.add(grp);
-                groups.push(grp);
-            });
+            // Nose
+            const nose = new THREE.Mesh(new THREE.SphereGeometry(0.08), new THREE.MeshBasicMaterial({color: 0x000000}));
+            nose.position.set(0, 0, 0.8);
 
-            // Build Fairy (Modified for Compatibility)
-            createFairy();
+            // Eyes
+            const eyeGeo = new THREE.SphereGeometry(0.06);
+            const eyeMat = new THREE.MeshBasicMaterial({color: 0x000000});
+            const lEye = new THREE.Mesh(eyeGeo, eyeMat); lEye.position.set(-0.25, 0.1, 0.65);
+            const rEye = new THREE.Mesh(eyeGeo, eyeMat); rEye.position.set(0.25, 0.1, 0.65);
 
-            // Start Loop
-            animate();
+            group.add(head, lEar, rEar, body, muzzle, nose, lEye, rEye);
+            return group;
         }
 
-        function addHeart(parentGrp) {
-            const shape = new THREE.Shape();
-            const x=0, y=0;
-            shape.moveTo(x+0.25, y+0.25);
-            shape.bezierCurveTo(x+0.25, y+0.25, x+0.20, y, x, y);
-            shape.bezierCurveTo(x-0.30, y, x-0.30, y+0.35, x-0.30, y+0.35);
-            shape.bezierCurveTo(x-0.30, y+0.55, x-0.10, y+0.77, x+0.25, y+0.95);
-            shape.bezierCurveTo(x+0.60, y+0.77, x+0.80, y+0.55, x+0.80, y+0.35);
-            shape.bezierCurveTo(x+0.80, y+0.35, x+0.80, y, x+0.50, y);
-            shape.bezierCurveTo(x+0.35, y, x+0.25, y+0.25, x+0.25, y+0.25);
-            const heart = new THREE.Mesh(new THREE.ShapeGeometry(shape), new THREE.MeshBasicMaterial({color: 0xff69b4, transparent:true, opacity:0.6}));
-            heart.scale.set(0.5,0.5,0.5);
-            heart.position.set((Math.random()-0.5)*30, (Math.random()-0.5)*20, (Math.random()-0.5)*10);
-            heart.rotation.z = Math.PI;
-            parentGrp.add(heart);
-        }
+        const choonsik = createChoonsik();
+        choonsik.position.set(2, 0, 20); // Start next to camera
+        scene.add(choonsik);
 
-        function createFairy() {
-            fairyGrp = new THREE.Group();
-            // ERROR FIX: Use Cylinder instead of Capsule (Compatible with old Three.js)
-            const bodyGeo = new THREE.CylinderGeometry(0.6, 0.6, 1.5, 32); 
-            const bodyMat = new THREE.MeshLambertMaterial({color: 0x8e44ad}); 
-            const body = new THREE.Mesh(bodyGeo, bodyMat);
-            
-            const head = new THREE.Mesh(new THREE.SphereGeometry(0.6), new THREE.MeshLambertMaterial({color: 0xffd54f})); 
-            head.position.y = 1.0;
-            
-            const wingGeo = new THREE.CircleGeometry(0.8, 32, 0, Math.PI);
-            const wingMat = new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0.6, side:THREE.DoubleSide});
-            const lWing = new THREE.Mesh(wingGeo, wingMat); lWing.position.set(-0.6, 0.5, -0.3); lWing.rotation.y = 0.5;
-            const rWing = new THREE.Mesh(wingGeo, wingMat); rWing.position.set(0.6, 0.5, -0.3); rWing.rotation.y = -0.5;
-            
-            fairyGrp.add(body, head, lWing, rWing);
-            fairyGrp.position.set(0, -5, -240); 
-            scene.add(fairyGrp);
-        }
+        // --- LOADER & GALLERY BUILDER ---
+        const loader = new THREE.TextureLoader();
+        const photoMeshes = [];
 
         function tryLoadTexture(baseName, mesh) {
             const extensions = ['.jpg', '.JPG', '.jpeg', '.webp', '.png'];
             function attempt(index) {
                 if(index >= extensions.length) {
-                    mesh.material.color.setHex(0xff0000); // Red on error
+                    mesh.material.color.setHex(0xff0000); // Fail
                     return;
                 }
                 const url = baseName + extensions[index];
@@ -309,103 +310,235 @@
                     mesh.material.needsUpdate = true;
                     mesh.userData.src = url;
                     loadedCount++;
-                    document.getElementById('status-text').innerText = `Photos loaded: ${loadedCount}/${totalPhotos}`;
+                    document.getElementById('status-text').innerText = `Curating Museum: ${loadedCount}/${totalPhotos}`;
                 }, undefined, () => attempt(index + 1));
             }
             attempt(0);
+        }
+
+        memories.forEach((mem, index) => {
+            const group = new THREE.Group();
+            // Position the entire cluster at the memory's location
+            group.position.set(mem.pos.x, mem.pos.y, mem.pos.z);
+            
+            // Create a "Floor/Base" for the memory
+            const baseGeo = new THREE.CylinderGeometry(15, 15, 0.5, 64);
+            const baseMat = new THREE.MeshLambertMaterial({ color: mem.color, transparent: true, opacity: 0.8 });
+            const base = new THREE.Mesh(baseGeo, baseMat);
+            base.position.y = -5;
+            group.add(base);
+
+            // Arranging photos in a semi-circle "Gallery Wall"
+            const count = mem.photos.length;
+            const radius = 10;
+            const angleStep = Math.PI / (count + 1);
+
+            mem.photos.forEach((baseName, i) => {
+                // Calculate position on semi-circle
+                const angle = Math.PI - (angleStep * (i + 1)); // Spread from left to right
+                const x = Math.cos(angle) * radius;
+                const z = Math.sin(angle) * radius * 0.5; // Slight curve depth
+
+                // Placeholder Mesh
+                const mesh = new THREE.Mesh(new THREE.PlaneGeometry(5, 3.5), new THREE.MeshLambertMaterial({ color: 0xeeeeee }));
+                
+                mesh.position.set(x, (Math.random()-0.5)*3, z); // Random height variation
+                mesh.lookAt(0, 0, 20); // Look roughly towards where camera arrives
+                mesh.castShadow = true; 
+                
+                // Frame
+                const frame = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 3.7), new THREE.MeshBasicMaterial({color:0xffffff}));
+                frame.position.z = -0.05; mesh.add(frame);
+                
+                group.add(mesh);
+                photoMeshes.push(mesh);
+                tryLoadTexture(baseName, mesh);
+            });
+
+            // Decor: Hearts floating above
+            for(let i=0; i<5; i++){
+                const heart = createHeart();
+                heart.position.set((Math.random()-0.5)*15, 5 + Math.random()*5, (Math.random()-0.5)*5);
+                group.add(heart);
+            }
+
+            scene.add(group);
+        });
+
+        function createHeart() {
+            const shape = new THREE.Shape();
+            const x=0, y=0;
+            shape.moveTo(x+0.25, y+0.25);
+            shape.bezierCurveTo(x+0.25, y+0.25, x+0.20, y, x, y);
+            shape.bezierCurveTo(x-0.30, y, x-0.30, y+0.35, x-0.30, y+0.35);
+            shape.bezierCurveTo(x-0.30, y+0.55, x-0.10, y+0.77, x+0.25, y+0.95);
+            shape.bezierCurveTo(x+0.60, y+0.77, x+0.80, y+0.55, x+0.80, y+0.35);
+            shape.bezierCurveTo(x+0.80, y+0.35, x+0.80, y, x+0.50, y);
+            shape.bezierCurveTo(x+0.35, y, x+0.25, y+0.25, x+0.25, y+0.25);
+            const mesh = new THREE.Mesh(new THREE.ShapeGeometry(shape), new THREE.MeshBasicMaterial({color: 0xff69b4, transparent:true, opacity:0.6}));
+            mesh.scale.set(0.5,0.5,0.5);
+            mesh.rotation.z = Math.PI;
+            return mesh;
         }
 
         // --- INTERACTION ---
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
         
-        function onInteract(x, y) {
+        window.addEventListener('click', e => {
             if(!isStarted) return;
-            mouse.x = (x / window.innerWidth) * 2 - 1;
-            mouse.y = -(y / window.innerHeight) * 2 + 1;
+            // Prevent clicking through the letter modal or zoom overlay
+            if(document.getElementById('letter-modal').classList.contains('visible')) return;
+            if(document.getElementById('zoom-overlay').style.display === 'flex') return;
+
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(mouse, camera);
             const intersects = raycaster.intersectObjects(photoMeshes);
-            if(intersects.length > 0) {
-                if(intersects[0].object.userData.src) {
-                    document.getElementById('zoom-img').src = intersects[0].object.userData.src;
-                    document.getElementById('zoom-overlay').style.display = 'flex';
-                }
+            if(intersects.length > 0 && intersects[0].object.userData.src) {
+                document.getElementById('zoom-img').src = intersects[0].object.userData.src;
+                document.getElementById('zoom-overlay').style.display = 'flex';
             }
-        }
-
-        window.addEventListener('click', e => onInteract(e.clientX, e.clientY));
-        
-        // --- SCROLL & ANIMATION ---
-        let scrollY = 0;
-        const maxScroll = 260; 
-        
-        function handleScroll(delta) {
-            if(!isStarted) return;
-            scrollY += delta * 0.05;
-            scrollY = Math.max(0, Math.min(scrollY, maxScroll));
-            targetZ = 10 - scrollY;
-
-            if(scrollY > 230) {
-                document.getElementById('letter-modal').classList.add('visible');
-                // Simple float up
-                if(fairyGrp.position.y < 0) fairyGrp.position.y += 0.05;
-            }
-        }
-        
-        window.addEventListener('wheel', e => handleScroll(e.deltaY));
-        let ty=0;
-        window.addEventListener('touchstart', e=>ty=e.touches[0].clientY);
-        window.addEventListener('touchmove', e=>{
-            const d = ty - e.touches[0].clientY;
-            handleScroll(d * 2.5);
-            ty=e.touches[0].clientY;
         });
 
+        // --- SCROLL & TRAVEL LOGIC ---
+        let scrollProgress = 0; // 0 to 1
+        let scrollTarget = 0;
+        
+        window.addEventListener('wheel', e => {
+            if(!isStarted) return;
+            scrollTarget += e.deltaY * 0.0005;
+            scrollTarget = Math.max(0, Math.min(scrollTarget, 1));
+        });
+        
+        // Touch support
+        let touchStart = 0;
+        window.addEventListener('touchstart', e => touchStart = e.touches[0].clientY);
+        window.addEventListener('touchmove', e => {
+            if(!isStarted) return;
+            const delta = touchStart - e.touches[0].clientY;
+            scrollTarget += delta * 0.001;
+            scrollTarget = Math.max(0, Math.min(scrollTarget, 1));
+            touchStart = e.touches[0].clientY;
+        });
+
+        // --- ANIMATION LOOP ---
         const clock = new THREE.Clock();
-        const headTitle = document.getElementById('chap-head');
-        const subTitle = document.getElementById('chap-sub');
-        const txtBox = document.getElementById('chapter-text');
-        const bar = document.getElementById('progress-bar');
+        const plaqueHead = document.getElementById('chap-head');
+        const plaqueSub = document.getElementById('chap-sub');
+        const plaqueDiv = document.getElementById('chapter-text');
+        const progressBar = document.getElementById('progress-bar');
+
+        // Path interpolation
+        function getPathPosition(t) {
+            // Map t (0-1) to segments between memories
+            const segmentCount = memories.length; 
+            const segment = t * segmentCount; 
+            const index = Math.min(Math.floor(segment), segmentCount - 1);
+            const nextIndex = Math.min(index + 1, segmentCount - 1);
+            const ratio = segment - index; // 0 to 1 within segment
+
+            // Linear interpolation between waypoints
+            const p1 = (index === -1) ? {x:0, y:0, z:30} : memories[index].pos; // Start point
+            const p2 = memories[nextIndex].pos;
+
+            // Simple Lerp
+            const x = p1.x + (p2.x - p1.x) * ratio;
+            const y = p1.y + (p2.y - p1.y) * ratio;
+            const z = p1.z + (p2.z - p1.z) * ratio;
+
+            return { x, y, z, index };
+        }
 
         function animate(){
             requestAnimationFrame(animate);
             const time = clock.getElapsedTime();
-            camera.position.z += (targetZ - camera.position.z)*0.05;
 
-            // Fairy Flap
-            if(fairyGrp) {
-                const wingSpeed = time * 15;
-                fairyGrp.children[2].rotation.z = Math.sin(wingSpeed)*0.6;
-                fairyGrp.children[3].rotation.z = -Math.sin(wingSpeed)*0.6;
-                if(scrollY < 230) fairyGrp.position.y += Math.sin(time*3)*0.005; 
-            }
+            if(isStarted) {
+                // Smooth scroll
+                scrollProgress += (scrollTarget - scrollProgress) * 0.05;
+                
+                // 1. Move Camera based on path
+                // We create a virtual path that includes the "Start" position
+                const allPoints = [{x:0, y:0, z:30}, ...memories.map(m => m.pos)];
+                
+                // Find current segment
+                const maxIndex = allPoints.length - 1;
+                const progressScaled = scrollProgress * maxIndex;
+                const currentIndex = Math.floor(progressScaled);
+                const nextIndex = Math.min(currentIndex + 1, maxIndex);
+                const ratio = progressScaled - currentIndex;
 
-            if(isStarted){
-                groups.forEach((g,i)=>{
-                    g.position.y = Math.sin(time*0.5 + i)*0.5;
-                    g.rotation.z = Math.sin(time*0.1 + i)*0.02;
+                const p1 = allPoints[currentIndex];
+                const p2 = allPoints[nextIndex];
 
-                    const dist = Math.abs(g.position.z - camera.position.z);
-                    if(dist < 35){
-                        scene.background.lerp(new THREE.Color(memories[i].color), 0.05);
-                        scene.fog.color.lerp(new THREE.Color(memories[i].color), 0.05);
-                        
-                        if(dist < 20){
-                            if(headTitle.innerText !== memories[i].title){
-                                txtBox.classList.remove('active');
-                                setTimeout(()=>{
-                                    headTitle.innerText=memories[i].title;
-                                    subTitle.innerText=memories[i].sub;
-                                    txtBox.classList.add('active');
-                                }, 500);
-                            } else if(!txtBox.classList.contains('active')) txtBox.classList.add('active');
-                        }
-                    }
+                // Camera Position
+                camera.position.x = p1.x + (p2.x - p1.x) * ratio;
+                camera.position.y = p1.y + (p2.y - p1.y) * ratio;
+                camera.position.z = p1.z + (p2.z - p1.z) * ratio;
+
+                // 2. Camera LookAt (Smooth Turn)
+                // Look slightly ahead on the path
+                const lookRatio = Math.min(progressScaled + 0.5, maxIndex); // Look 0.5 steps ahead
+                const lIdx = Math.floor(lookRatio);
+                const lNext = Math.min(lIdx + 1, maxIndex);
+                const lRat = lookRatio - lIdx;
+                const lP1 = allPoints[lIdx];
+                const lP2 = allPoints[lNext];
+                
+                const lx = lP1.x + (lP2.x - lP1.x) * lRat;
+                const ly = lP1.y + (lP2.y - lP1.y) * lRat;
+                const lz = lP1.z + (lP2.z - lP1.z) * lRat;
+                
+                camera.lookAt(lx, ly, lz);
+
+                // 3. Move Choonsik (He flies next to camera)
+                // Add some offset so he doesn't block view
+                choonsik.position.x = camera.position.x + 3;
+                choonsik.position.y = camera.position.y - 1 + Math.sin(time*3)*0.2; // Bobbing
+                choonsik.position.z = camera.position.z - 5;
+                choonsik.rotation.y = Math.sin(time) * 0.2; // Gentle sway
+
+                // 4. Update UI Text based on proximity to Memory Node
+                // We check distance to actual memory nodes
+                let activeMemory = -1;
+                memories.forEach((mem, i) => {
+                    const dx = camera.position.x - mem.pos.x;
+                    const dz = camera.position.z - mem.pos.z;
+                    const dist = Math.sqrt(dx*dx + dz*dz);
+                    
+                    if(dist < 15) activeMemory = i;
                 });
-                bar.style.height = Math.min((scrollY/maxScroll)*100,100)+"%";
+
+                if(activeMemory !== -1) {
+                    const mem = memories[activeMemory];
+                    // Change Fog color to match mood
+                    scene.background.lerp(new THREE.Color(mem.color), 0.02);
+                    scene.fog.color.lerp(new THREE.Color(mem.color), 0.02);
+
+                    if(plaqueHead.innerText !== mem.title) {
+                        plaqueDiv.classList.remove('active');
+                        setTimeout(() => {
+                            plaqueHead.innerText = mem.title;
+                            plaqueSub.innerText = mem.sub;
+                            plaqueDiv.classList.add('active');
+                        }, 500);
+                    } else if(!plaqueDiv.classList.contains('active')) {
+                        plaqueDiv.classList.add('active');
+                    }
+                }
+
+                // 5. Letter Trigger at End
+                if(scrollProgress > 0.98) {
+                    document.getElementById('letter-modal').classList.add('visible');
+                }
+
+                progressBar.style.width = (scrollProgress * 100) + "%";
             }
+
             renderer.render(scene, camera);
         }
+        animate();
 
         window.addEventListener('resize', ()=>{
             camera.aspect=window.innerWidth/window.innerHeight;
