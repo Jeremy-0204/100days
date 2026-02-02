@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>100 Days Museum (Explorer Edition)</title>
+    <title>100 Days: The Adventure</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Lato:wght@300;400;700&display=swap');
 
@@ -14,38 +14,33 @@
             user-select: none; -webkit-user-select: none;
         }
 
-        /* UI LAYER */
+        /* UI */
         #ui-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10;
             pointer-events: none;
         }
 
-        /* NAVIGATION BUTTONS (The "Island Hoppers") */
-        .nav-btn {
-            position: absolute; bottom: 40px; 
-            background: rgba(15, 15, 20, 0.8); color: #d4af37;
-            border: 1px solid #d4af37; padding: 15px 30px;
-            font-family: 'Playfair Display', serif; font-size: 1.2rem;
-            cursor: pointer; pointer-events: auto; border-radius: 50px;
-            transition: all 0.3s ease; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            text-transform: uppercase; letter-spacing: 2px;
+        /* CONTROLS HINT */
+        #controls-hint {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            color: rgba(255,255,255,0.8); font-size: 0.9rem; letter-spacing: 2px;
+            background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 30px;
+            text-transform: uppercase; border: 1px solid rgba(255,255,255,0.2);
+            transition: opacity 0.5s;
         }
-        .nav-btn:hover { background: #d4af37; color: #fff; transform: translateY(-3px); }
-        #prev-btn { left: 40px; display: none; } /* Hidden at start */
-        #next-btn { right: 40px; }
 
-        /* HEADER INFO */
+        /* HEADER */
         #header-info {
             position: absolute; top: 40px; left: 50%; transform: translateX(-50%);
             text-align: center; width: 80%; pointer-events: none;
-            transition: opacity 0.5s;
+            transition: opacity 0.5s; text-shadow: 0 4px 20px rgba(0,0,0,0.8);
         }
         #header-info h1 {
-            font-family: 'Playfair Display', serif; font-size: 3rem; margin: 0;
-            color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            font-family: 'Playfair Display', serif; font-size: 3.5rem; margin: 0;
+            color: #fff; 
         }
         #header-info p {
-            font-size: 1rem; color: #d4af37; letter-spacing: 3px; text-transform: uppercase; margin-top: 10px; font-weight: bold;
+            font-size: 1.1rem; color: #d4af37; letter-spacing: 4px; text-transform: uppercase; margin-top: 5px; font-weight: bold;
         }
 
         /* START SCREEN */
@@ -66,11 +61,11 @@
         }
         #status-text { font-size: 0.9rem; color: #888; margin-top: 10px; font-weight: 300; }
 
-        /* LETTER MODAL */
+        /* LETTER */
         #letter-modal {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 90%; max-width: 550px; 
-            background: #fffdf5; padding: 50px; border-radius: 5px; box-shadow: 0 30px 80px rgba(0,0,0,0.8);
+            width: 90%; max-width: 550px; background: #fffdf5; 
+            padding: 50px; border-radius: 5px; box-shadow: 0 30px 80px rgba(0,0,0,0.8);
             border: 4px double #d4af37; z-index: 200; text-align: center; opacity: 0; pointer-events: none;
             transition: opacity 1.5s; display: none;
         }
@@ -83,7 +78,7 @@
         }
         .close-btn:hover { background: #d4af37; color: white; }
 
-        /* ZOOM OVERLAY */
+        /* ZOOM */
         #zoom-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.95); z-index: 150; display: none;
@@ -97,15 +92,18 @@
         }
         #close-hint { color: #888; margin-top: 25px; font-size: 0.8rem; letter-spacing: 3px; }
 
-        /* TUTORIAL OVERLAY */
-        #tutorial {
-            position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%);
-            color: rgba(255,255,255,0.6); font-size: 0.9rem; letter-spacing: 1px;
-            pointer-events: none; opacity: 0; transition: opacity 1s;
+        /* NAV BUTTONS */
+        .nav-btn {
+            position: absolute; bottom: 90px;
+            background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3);
+            padding: 10px 20px; border-radius: 30px; cursor: pointer; pointer-events: auto;
+            backdrop-filter: blur(5px); transition: all 0.3s;
         }
+        .nav-btn:hover { background: white; color: black; }
+        #next-jump { right: 30px; }
+        #prev-jump { left: 30px; display: none; }
 
         @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
-        
         #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
         #debug-console { display: none; }
     </style>
@@ -118,17 +116,17 @@
         <img id="huzzah-img" src="huzzah.gif" alt="HUZZAH" 
              onerror="this.src='https://media.giphy.com/media/MdGZp0GkF2L7i/giphy.gif'">
         <div class="click-hint" id="start-btn-text">LOADING...</div>
-        <div id="status-text">Choonsik is arranging the exhibits...</div>
+        <div id="status-text">Choonsik is warming up...</div>
     </div>
 
     <div id="ui-layer">
         <div id="header-info">
-            <h1 id="chap-head">The Birthday</h1>
-            <p id="chap-sub">Green Cakes & Red Lights</p>
+            <h1 id="chap-head">The Journey</h1>
+            <p id="chap-sub">Use WASD or Arrows to Fly</p>
         </div>
-        <div id="tutorial">DRAG TO EXPLORE • SCROLL TO ZOOM</div>
-        <button id="prev-btn" class="nav-btn" onclick="prevMemory()">Previous</button>
-        <button id="next-btn" class="nav-btn" onclick="nextMemory()">Next Memory</button>
+        <div id="controls-hint">⌨️ WASD to Move • Click Photos to Zoom</div>
+        <button id="prev-jump" class="nav-btn" onclick="jumpTo(-1)">Jump Prev</button>
+        <button id="next-jump" class="nav-btn" onclick="jumpTo(1)">Jump Next</button>
     </div>
 
     <div id="letter-modal">
@@ -157,7 +155,6 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
     <script>
         // --- STARTUP ---
@@ -167,9 +164,9 @@
 
         window.onload = function() {
             isReady = true;
-            document.getElementById('start-btn-text').innerText = "ENTER MUSEUM";
+            document.getElementById('start-btn-text').innerText = "START ADVENTURE";
             document.getElementById('start-btn-text').style.color = "#d4af37";
-            document.getElementById('status-text').innerText = "Ready!";
+            document.getElementById('status-text').innerText = "All set!";
         };
 
         function tryStart() {
@@ -178,10 +175,7 @@
             const screen = document.getElementById('start-screen');
             screen.style.opacity = 0;
             setTimeout(() => { screen.style.display = 'none'; }, 1500);
-            
-            // Show tutorial
-            setTimeout(() => { document.getElementById('tutorial').style.opacity = 1; }, 2000);
-            setTimeout(() => { document.getElementById('tutorial').style.opacity = 0; }, 8000);
+            setTimeout(() => { document.getElementById('controls-hint').style.opacity = 0; }, 8000);
         }
 
         function closeZoom() {
@@ -190,8 +184,7 @@
             setTimeout(() => { z.style.display = 'none'; }, 300);
         }
 
-        // --- CONFIG: MEMORY ISLANDS ---
-        // Coordinates for each island in the vast 3D space
+        // --- CONFIG ---
         const memories = [
             { 
                 id: 'birthday', 
@@ -206,7 +199,7 @@
                 title: "Cheonggyecheon", 
                 sub: "Lights & Tacos", 
                 color: 0x00e5ff, 
-                pos: { x: -100, y: 20, z: -100 }, 
+                pos: { x: -80, y: 15, z: -100 }, 
                 photos: ["11250", "11253", "11221", "11255", "11215", "11214"] 
             },
             { 
@@ -214,7 +207,7 @@
                 title: "Daegu Christmas", 
                 sub: "Cozy Winter Vibes", 
                 color: 0x00e676, 
-                pos: { x: 100, y: -20, z: -200 }, 
+                pos: { x: 80, y: -15, z: -200 }, 
                 photos: ["11525", "11528", "11519", "11547", "11538", "11544"] 
             },
             { 
@@ -222,7 +215,7 @@
                 title: "Sinchon Scholars", 
                 sub: "Notebooks & Sweet Potatoes", 
                 color: 0xffd740, 
-                pos: { x: 0, y: 40, z: -300 }, 
+                pos: { x: 0, y: 30, z: -300 }, 
                 photos: ["11967", "11964", "11969", "11968"] 
             },
             { 
@@ -230,82 +223,83 @@
                 title: "Pohang Recovery", 
                 sub: "From ER to Ocean Blue", 
                 color: 0x7c4dff, 
-                pos: { x: 0, y: 0, z: -450 }, 
+                pos: { x: 0, y: 0, z: -420 }, 
                 photos: ["12851", "12900", "12913", "13110", "13069", "12969", "12999", "13051", "13098", "13118"] 
             }
         ];
-
         const totalPhotos = memories.reduce((acc, val) => acc + val.photos.length, 0);
-        let currentMemoryIndex = 0;
 
-        // --- 3D SCENE ---
+        // --- 3D SETUP ---
         const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x111116, 0.005); 
+        scene.fog = new THREE.FogExp2(0x111116, 0.006);
 
-        const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 3000);
-        camera.position.set(0, 5, 40); // Initial look position
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 2000);
+        camera.position.set(0, 5, 30);
 
         const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // HIGH RES
+        renderer.outputEncoding = THREE.sRGBEncoding; // VIBRANT COLORS
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-        // CONTROLS
-        const controls = new THREE.OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
-        controls.minDistance = 10;
-        controls.maxDistance = 100;
-        controls.enablePan = true;
-
-        // LIGHTING
-        const amb = new THREE.AmbientLight(0xffffff, 0.4); scene.add(amb);
-        const spot = new THREE.SpotLight(0xffd700, 1.2);
+        // LIGHTS
+        const amb = new THREE.AmbientLight(0xffffff, 0.5); scene.add(amb);
+        const spot = new THREE.SpotLight(0xffd700, 1.5);
         spot.position.set(50, 100, 50);
         spot.castShadow = true;
+        spot.shadow.mapSize.width = 2048; // High res shadows
+        spot.shadow.mapSize.height = 2048;
         scene.add(spot);
 
-        // STARFIELD
-        function createStars() {
-            const geo = new THREE.BufferGeometry();
-            const count = 3000;
-            const pos = new Float32Array(count * 3);
-            for(let i=0; i<count*3; i++) pos[i] = (Math.random()-0.5) * 1500;
-            geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-            const mat = new THREE.PointsMaterial({size: 0.8, color: 0xffffff, transparent: true, opacity: 0.8});
-            scene.add(new THREE.Points(geo, mat));
-        }
-        createStars();
+        // --- CHOONSIK AVATAR ---
+        let player, playerSprite;
+        const playerSpeed = 0.8;
+        const turnSpeed = 0.05;
 
-        // CHOONSIK
-        let choonsikSprite;
-        function createChoonsik() {
+        function createPlayer() {
+            player = new THREE.Group();
+            scene.add(player);
+            
             const loader = new THREE.TextureLoader();
             const tex = loader.load('choonsik.png', undefined, undefined, () => {
                 return loader.load('https://cdn-icons-png.flaticon.com/512/4712/4712109.png');
             });
             const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide });
-            const geo = new THREE.PlaneGeometry(4, 4);
-            choonsikSprite = new THREE.Mesh(geo, mat);
-            choonsikSprite.position.set(5, 0, 5);
-            scene.add(choonsikSprite);
+            const geo = new THREE.PlaneGeometry(5, 5);
+            playerSprite = new THREE.Mesh(geo, mat);
+            playerSprite.position.y = 2.5; // Center vertically
+            player.add(playerSprite);
+            
+            // Add a little glow
+            const light = new THREE.PointLight(0xffd700, 1, 20);
+            light.position.y = 2;
+            player.add(light);
+            
+            player.position.set(0, 0, 40); // Start pos
         }
-        createChoonsik();
+        createPlayer();
 
-        // GALLERY BUILDER
+        // --- INPUT HANDLING ---
+        const keys = { w:false, a:false, s:false, d:false, ArrowUp:false, ArrowLeft:false, ArrowDown:false, ArrowRight:false };
+        window.addEventListener('keydown', e => { if(keys.hasOwnProperty(e.key)) keys[e.key] = true; });
+        window.addEventListener('keyup', e => { if(keys.hasOwnProperty(e.key)) keys[e.key] = false; });
+
+        // --- WORLD BUILDER ---
         const textureLoader = new THREE.TextureLoader();
         const photoMeshes = [];
 
         function tryLoadTexture(baseName, mesh) {
             const extensions = ['.jpg', '.JPG', '.jpeg', '.webp', '.png'];
             function attempt(index) {
-                if(index >= extensions.length) {
-                    mesh.material.color.setHex(0x333333);
-                    return;
-                }
+                if(index >= extensions.length) { mesh.material.color.setHex(0x333333); return; }
                 const url = baseName + extensions[index];
                 textureLoader.load(url, (tex) => {
+                    // HIGH RES SETTINGS
+                    tex.encoding = THREE.sRGBEncoding;
+                    tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+                    
                     const aspect = tex.image.width / tex.image.height;
                     const w = 8; const h = w/aspect;
                     mesh.geometry.dispose();
@@ -314,59 +308,95 @@
                     mesh.material.color.setHex(0xffffff);
                     mesh.material.needsUpdate = true;
                     
+                    // Update frame
                     mesh.children[0].geometry.dispose();
-                    mesh.children[0].geometry = new THREE.BoxGeometry(w+0.6, h+0.6, 0.3);
+                    mesh.children[0].geometry = new THREE.BoxGeometry(w+0.5, h+0.5, 0.4);
                     
                     mesh.userData.src = url;
                     loadedCount++;
-                    document.getElementById('status-text').innerText = `Curating Museum: ${loadedCount}/${totalPhotos}`;
+                    document.getElementById('status-text').innerText = `Preparing Island ${memories[Math.floor((loadedCount/totalPhotos)*4)].title}...`;
                 }, undefined, () => attempt(index + 1));
             }
             attempt(0);
         }
 
-        // Build Islands
+        // --- THEME DECORATORS ---
+        function addDecor(group, id, color) {
+            if(id === 'birthday') { // Gift Boxes
+                for(let i=0; i<5; i++) {
+                    const box = new THREE.Mesh(new THREE.BoxGeometry(2,2,2), new THREE.MeshLambertMaterial({color: color}));
+                    box.position.set((Math.random()-0.5)*20, -5, (Math.random()-0.5)*20);
+                    box.rotation.y = Math.random();
+                    box.castShadow = true;
+                    group.add(box);
+                }
+            } else if(id === 'stream') { // Lanterns
+                for(let i=0; i<8; i++) {
+                    const lantern = new THREE.Mesh(new THREE.DodecahedronGeometry(1), new THREE.MeshBasicMaterial({color: 0xffaa00}));
+                    lantern.position.set((Math.random()-0.5)*25, Math.random()*10, (Math.random()-0.5)*25);
+                    group.add(lantern);
+                }
+            } else if(id === 'daegu') { // Snowmen
+                for(let i=0; i<3; i++) {
+                    const snow = new THREE.Group();
+                    const b1 = new THREE.Mesh(new THREE.SphereGeometry(1.5), new THREE.MeshLambertMaterial({color:0xffffff}));
+                    const b2 = new THREE.Mesh(new THREE.SphereGeometry(1.0), new THREE.MeshLambertMaterial({color:0xffffff}));
+                    b2.position.y = 2;
+                    snow.add(b1, b2);
+                    snow.position.set((Math.random()-0.5)*20, -5, (Math.random()-0.5)*20);
+                    group.add(snow);
+                }
+            } else if(id === 'study') { // Books
+                for(let i=0; i<6; i++) {
+                    const book = new THREE.Mesh(new THREE.BoxGeometry(2, 0.5, 3), new THREE.MeshLambertMaterial({color: Math.random()*0xffffff}));
+                    book.position.set((Math.random()-0.5)*15, -6 + (i*0.5), (Math.random()-0.5)*15);
+                    group.add(book);
+                }
+            } else if(id === 'pohang') { // Bubbles
+                for(let i=0; i<15; i++) {
+                    const bub = new THREE.Mesh(new THREE.SphereGeometry(0.5 + Math.random()), new THREE.MeshPhongMaterial({color: 0xaaddff, transparent:true, opacity:0.6}));
+                    bub.position.set((Math.random()-0.5)*30, Math.random()*20, (Math.random()-0.5)*30);
+                    group.add(bub);
+                }
+            }
+        }
+
+        // --- BUILD ISLANDS ---
         memories.forEach((mem, index) => {
             const group = new THREE.Group();
             group.position.set(mem.pos.x, mem.pos.y, mem.pos.z);
 
-            // 1. Platform
-            const platGeo = new THREE.CylinderGeometry(25, 23, 1, 64);
-            const platMat = new THREE.MeshPhongMaterial({ color: 0x222222, shininess: 100, opacity: 0.9, transparent: true });
+            // Platform
+            const platGeo = new THREE.CylinderGeometry(25, 20, 2, 64);
+            const platMat = new THREE.MeshStandardMaterial({ 
+                color: 0x333333, roughness: 0.5, metalness: 0.2
+            });
             const platform = new THREE.Mesh(platGeo, platMat);
-            platform.position.y = -6;
+            platform.position.y = -7;
             platform.receiveShadow = true;
             group.add(platform);
 
-            // 2. Light
-            const light = new THREE.PointLight(mem.color, 1.5, 80);
-            light.position.set(0, 20, 0);
-            group.add(light);
+            // Decor
+            addDecor(group, mem.id, mem.color);
 
-            // 3. Photos - WIDE ARC ARRANGEMENT
+            // Photos
             const count = mem.photos.length;
-            const radius = 16; // Much larger radius for spacing
-            // Total arc width: 120 degrees (2/3 PI). Start from -60 to +60
-            const totalArc = Math.PI * 0.8; 
-            const startAngle = -totalArc / 2;
-            const angleStep = totalArc / (count - 1 || 1); 
+            const radius = 15;
+            const angleStep = (Math.PI * 1.2) / count;
+            const startAngle = -(Math.PI * 1.2) / 2 + (angleStep/2);
 
             mem.photos.forEach((baseName, i) => {
-                // Calculate angle: center photo is at 0
-                let angle = startAngle + (angleStep * i);
-                if (count === 1) angle = 0;
-
+                const angle = startAngle + (i * angleStep);
                 const x = Math.sin(angle) * radius;
-                const z = Math.cos(angle) * radius - 10; // Push back slightly
-
-                const mesh = new THREE.Mesh(new THREE.PlaneGeometry(5, 3.5), new THREE.MeshLambertMaterial({ color: 0x444444 }));
+                const z = Math.cos(angle) * radius - 10;
                 
+                const mesh = new THREE.Mesh(new THREE.PlaneGeometry(5,3.5), new THREE.MeshLambertMaterial({color: 0x555555}));
                 mesh.position.set(x, (Math.random()-0.5)*2, z);
-                mesh.lookAt(0, 0, 40); // Look at the viewer arrival point (approx)
+                mesh.lookAt(0,0,30);
                 
-                // Add Frame
-                const frame = new THREE.Mesh(new THREE.BoxGeometry(5.4, 3.9, 0.2), new THREE.MeshStandardMaterial({color: 0xffd700, metalness: 0.8, roughness: 0.2}));
-                frame.position.z = -0.15;
+                // Fancy Frame
+                const frame = new THREE.Mesh(new THREE.BoxGeometry(5.2, 3.7, 0.3), new THREE.MeshStandardMaterial({color: 0xffd700, roughness:0.3, metalness:0.8}));
+                frame.position.z = -0.2;
                 mesh.add(frame);
 
                 group.add(mesh);
@@ -377,106 +407,15 @@
             scene.add(group);
         });
 
-        // --- NAVIGATION LOGIC ---
-        function updateUI(index) {
-            const mem = memories[index];
-            const head = document.getElementById('chap-head');
-            const sub = document.getElementById('chap-sub');
-            
-            // Fade out, change text, fade in
-            const info = document.getElementById('header-info');
-            info.style.opacity = 0;
-            setTimeout(() => {
-                head.innerText = mem.title;
-                sub.innerText = mem.sub;
-                info.style.opacity = 1;
-            }, 500);
-
-            // Button visibility
-            document.getElementById('prev-btn').style.display = index === 0 ? 'none' : 'block';
-            
-            const nextBtn = document.getElementById('next-btn');
-            if(index === memories.length - 1) {
-                nextBtn.innerText = "Open Letter";
-                nextBtn.onclick = openLetter;
-            } else {
-                nextBtn.innerText = "Next Memory";
-                nextBtn.onclick = nextMemory;
-            }
-        }
-
-        function flyToMemory(index) {
-            const mem = memories[index];
-            
-            // Target position: Slightly in front of the island (z + 40)
-            const targetPos = { x: mem.pos.x, y: mem.pos.y + 5, z: mem.pos.z + 40 };
-            const lookTarget = { x: mem.pos.x, y: mem.pos.y, z: mem.pos.z };
-
-            // Animate Camera
-            gsap.to(camera.position, {
-                x: targetPos.x,
-                y: targetPos.y,
-                z: targetPos.z,
-                duration: 2,
-                ease: "power2.inOut",
-                onUpdate: () => controls.update() // Keep controls sync
-            });
-
-            // Animate Controls Target (Where we orbit around)
-            gsap.to(controls.target, {
-                x: lookTarget.x,
-                y: lookTarget.y,
-                z: lookTarget.z,
-                duration: 2,
-                ease: "power2.inOut"
-            });
-
-            // Move Choonsik
-            if(choonsikSprite) {
-                gsap.to(choonsikSprite.position, {
-                    x: mem.pos.x + 8,
-                    y: mem.pos.y,
-                    z: mem.pos.z + 5,
-                    duration: 2.5,
-                    ease: "power1.inOut"
-                });
-            }
-
-            updateUI(index);
-        }
-
-        window.nextMemory = function() {
-            if(currentMemoryIndex < memories.length - 1) {
-                currentMemoryIndex++;
-                flyToMemory(currentMemoryIndex);
-            }
-        }
-
-        window.prevMemory = function() {
-            if(currentMemoryIndex > 0) {
-                currentMemoryIndex--;
-                flyToMemory(currentMemoryIndex);
-            }
-        }
-
-        window.openLetter = function() {
-            document.getElementById('letter-modal').classList.add('visible');
-        }
-
         // --- INTERACTION ---
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
         
         window.addEventListener('click', e => {
-            if(!isStarted) return;
-            // Ignore UI clicks
-            if(e.target.closest('button')) return;
-            if(document.getElementById('letter-modal').classList.contains('visible')) return;
+            if(!isStarted || e.target.closest('button')) return;
             
-            // Calculate mouse pos for raycaster
             mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-            
             raycaster.setFromCamera(mouse, camera);
             const intersects = raycaster.intersectObjects(photoMeshes);
             if(intersects.length > 0) {
@@ -490,19 +429,85 @@
             }
         });
 
-        // --- ANIMATION ---
+        // --- GAME LOOP ---
         const clock = new THREE.Clock();
+        const head = document.getElementById('chap-head');
+        const sub = document.getElementById('chap-sub');
+        let currentMemIndex = 0;
+
+        function checkNearestMemory() {
+            let minDist = 9999;
+            let idx = -1;
+            memories.forEach((mem, i) => {
+                const d = player.position.distanceTo(new THREE.Vector3(mem.pos.x, mem.pos.y, mem.pos.z));
+                if(d < minDist) { minDist = d; idx = i; }
+            });
+
+            if(idx !== -1 && minDist < 60) {
+                currentMemIndex = idx;
+                if(head.innerText !== memories[idx].title) {
+                    document.getElementById('header-info').style.opacity = 0;
+                    setTimeout(() => {
+                        head.innerText = memories[idx].title;
+                        sub.innerText = memories[idx].sub;
+                        document.getElementById('header-info').style.opacity = 1;
+                    }, 500);
+                    // Update buttons
+                    document.getElementById('prev-jump').style.display = idx > 0 ? 'block' : 'none';
+                    if(idx === memories.length -1) {
+                        document.getElementById('next-jump').innerText = "Open Letter";
+                        document.getElementById('next-jump').onclick = () => document.getElementById('letter-modal').classList.add('visible');
+                    } else {
+                        document.getElementById('next-jump').innerText = "Jump Next";
+                        document.getElementById('next-jump').onclick = () => jumpTo(1);
+                    }
+                }
+            }
+        }
+
+        window.jumpTo = function(dir) {
+            const nextIdx = Math.min(Math.max(currentMemIndex + dir, 0), memories.length-1);
+            const mem = memories[nextIdx];
+            
+            // Teleport effect (simple slide)
+            gsap.to(player.position, {
+                x: mem.pos.x, y: mem.pos.y, z: mem.pos.z + 30,
+                duration: 2, ease: "power2.inOut"
+            });
+        };
 
         function animate() {
             requestAnimationFrame(animate);
+            const dt = clock.getDelta();
             const time = clock.getElapsedTime();
-            
-            controls.update();
 
-            // Choonsik Idle Animation
-            if(choonsikSprite) {
-                choonsikSprite.position.y += Math.sin(time * 3) * 0.02;
-                choonsikSprite.lookAt(camera.position); // Always face user
+            if(isStarted) {
+                // PLAYER MOVEMENT
+                const moveVec = new THREE.Vector3(0,0,0);
+                if(keys.w || keys.ArrowUp) moveVec.z -= 1;
+                if(keys.s || keys.ArrowDown) moveVec.z += 1;
+                if(keys.a || keys.ArrowLeft) moveVec.x -= 1;
+                if(keys.d || keys.ArrowRight) moveVec.x += 1;
+
+                moveVec.normalize().multiplyScalar(playerSpeed);
+                // Adjust movement to be relative to camera (simple version)
+                player.position.add(moveVec);
+
+                // Bobbing effect
+                playerSprite.position.y = 2.5 + Math.sin(time * 5) * 0.2;
+
+                // CAMERA FOLLOW
+                // Camera stays behind and slightly above player
+                const idealOffset = new THREE.Vector3(0, 10, 30);
+                const idealLook = new THREE.Vector3(0, 0, -20);
+                
+                // Smoothly lerp camera to player + offset
+                const targetCamPos = player.position.clone().add(idealOffset);
+                camera.position.lerp(targetCamPos, 0.05);
+                camera.lookAt(player.position.clone().add(new THREE.Vector3(0,0,-20)));
+
+                // Logic Updates
+                checkNearestMemory();
             }
 
             renderer.render(scene, camera);
