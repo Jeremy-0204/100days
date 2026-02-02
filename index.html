@@ -20,13 +20,13 @@
 
         /* START SCREEN */
         #start-screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 50;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 100;
             background: #fff; display: flex; flex-direction: column;
             justify-content: center; align-items: center; transition: opacity 1s;
         }
         #huzzah-btn {
             background: none; border: none; cursor: pointer; pointer-events: auto;
-            transition: transform 0.2s;
+            transition: transform 0.2s; position: relative; z-index: 101;
         }
         #huzzah-btn:hover { transform: scale(1.05); }
         #huzzah-btn img {
@@ -59,7 +59,7 @@
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 80%; max-width: 600px; background: rgba(255,255,255,0.95);
             padding: 40px; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-            z-index: 100; text-align: center; opacity: 0; pointer-events: none;
+            z-index: 200; text-align: center; opacity: 0; pointer-events: none;
             transition: opacity 1s; display: none;
         }
         #letter-modal.visible { opacity: 1; pointer-events: auto; display: block; }
@@ -70,15 +70,14 @@
             border-radius: 20px; cursor: pointer; font-size: 1rem;
         }
 
-        /* PHOTO ZOOM OVERLAY */
+        /* ZOOM OVERLAY */
         #zoom-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); z-index: 60; display: none;
+            background: rgba(0,0,0,0.85); z-index: 150; display: none;
             justify-content: center; align-items: center; cursor: zoom-out;
         }
         #zoom-img { max-width: 90%; max-height: 90%; border: 5px solid white; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
 
-        /* PROGRESS */
         #progress-container {
             position: absolute; right: 30px; top: 50%; transform: translateY(-50%);
             height: 200px; width: 3px; background: rgba(0,0,0,0.05);
@@ -93,8 +92,9 @@
 <body>
 
     <div id="start-screen">
-        <button id="huzzah-btn">
-            <img src="huzzah.gif" alt="HUZZAH" onerror="this.src='https://media.giphy.com/media/MdGZp0GkF2L7i/giphy.gif'">
+        <button id="huzzah-btn" onclick="startGame()">
+            <img src="huzzah.gif" alt="CLICK TO START" 
+                 onerror="this.src='https://media.giphy.com/media/MdGZp0GkF2L7i/giphy.gif'">
         </button>
         <div class="click-hint">Click to say "Let's Go" (가자!)</div>
     </div>
@@ -124,18 +124,27 @@
         </div>
     </div>
 
-    <div id="zoom-overlay">
-        <img id="zoom-img" src="">
-    </div>
-
+    <div id="zoom-overlay" onclick="this.style.display='none'"><img id="zoom-img" src=""></div>
     <div id="canvas-container"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 
     <script>
+        // --- GLOBAL START FUNCTION ---
+        let isStarted = false;
+        let targetZ = 20;
+        
+        function startGame() {
+            console.log("Starting...");
+            isStarted = true; 
+            targetZ = 10;
+            const screen = document.getElementById('start-screen');
+            screen.style.opacity = 0;
+            setTimeout(() => { screen.style.display = 'none'; }, 1000);
+        }
+
         // CONFIG
-        // Adjusted Z-positions for better spacing
         const memories = [
             { id: 'birthday', title: "The Birthday", sub: "Green Cakes & Red Lights", color: 0xffebee, z: 0, 
               photos: ["10153.jpg", "10157.jpg", "10150.jpg", "10164.jpg"] },
@@ -149,10 +158,10 @@
               photos: ["12851.jpg", "12900.jpg", "12913.jpg", "13110.jpg", "13069.jpg", "12969.jpg", "12999.jpg", "13051.jpg", "13098.jpg", "13118.jpg"] }
         ];
 
-        // SETUP
+        // 3D SETUP
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0xfdfbfb);
-        scene.fog = new THREE.FogExp2(0xfdfbfb, 0.025); // Lighter fog for better visibility
+        scene.fog = new THREE.FogExp2(0xfdfbfb, 0.025);
 
         const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 1000);
         camera.position.z = 20;
@@ -162,16 +171,15 @@
         renderer.shadowMap.enabled = true;
         document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-        // LIGHTS
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7); // Brighter ambient
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
         scene.add(ambientLight);
-        const dirLight = new THREE.DirectionalLight(0xffd700, 0.8); // Warm sun
+        const dirLight = new THREE.DirectionalLight(0xffd700, 0.8);
         dirLight.position.set(10,20,10); dirLight.castShadow=true; scene.add(dirLight);
 
         // LOADER
         const loader = new THREE.TextureLoader();
         const groups = [];
-        const photoMeshes = []; // Store meshes for interaction
+        const photoMeshes = [];
 
         memories.forEach(mem => {
             const grp = new THREE.Group();
@@ -182,21 +190,18 @@
                     const aspect = tex.image.width/tex.image.height;
                     const w = 5; const h = w/aspect;
                     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w,h), new THREE.MeshLambertMaterial({map:tex, side:THREE.DoubleSide}));
-                    
                     mesh.position.set((Math.random()-0.5)*14, (Math.random()-0.5)*8, Math.random()*3);
                     mesh.rotation.z = (Math.random()-0.5)*0.4;
                     mesh.castShadow=true; mesh.receiveShadow=true;
-                    mesh.userData = { src: file }; // Store URL for zoom
-
+                    mesh.userData = { src: file };
                     const frame = new THREE.Mesh(new THREE.PlaneGeometry(w+0.3, h+0.3), new THREE.MeshBasicMaterial({color:0xffffff}));
                     frame.position.z = -0.05; mesh.add(frame);
-                    
                     grp.add(mesh);
                     photoMeshes.push(mesh);
                 }, undefined, err => console.log("Missing " + file));
             });
 
-            // Decor: Floating Hearts
+            // HEARTS
             for(let i=0; i<10; i++){
                 const shape = new THREE.Shape();
                 const x=0, y=0;
@@ -207,93 +212,56 @@
                 shape.bezierCurveTo(x+0.60, y+0.77, x+0.80, y+0.55, x+0.80, y+0.35);
                 shape.bezierCurveTo(x+0.80, y+0.35, x+0.80, y, x+0.50, y);
                 shape.bezierCurveTo(x+0.35, y, x+0.25, y+0.25, x+0.25, y+0.25);
-                
-                const heartGeo = new THREE.ShapeGeometry(shape);
-                const heartMat = new THREE.MeshBasicMaterial({color: 0xff69b4, transparent:true, opacity:0.6});
-                const heart = new THREE.Mesh(heartGeo, heartMat);
+                const heart = new THREE.Mesh(new THREE.ShapeGeometry(shape), new THREE.MeshBasicMaterial({color: 0xff69b4, transparent:true, opacity:0.6}));
                 heart.scale.set(0.5,0.5,0.5);
                 heart.position.set((Math.random()-0.5)*25, (Math.random()-0.5)*15, (Math.random()-0.5)*10);
-                heart.rotation.z = Math.PI; // Flip upright
+                heart.rotation.z = Math.PI;
                 grp.add(heart);
             }
-            
             scene.add(grp);
             groups.push(grp);
         });
 
-        // "SWEET POTATO FAIRY" CHARACTER (Simple Representation)
+        // FAIRY
         const fairyGrp = new THREE.Group();
-        // Body (Potato)
-        const bodyGeo = new THREE.CapsuleGeometry(0.5, 1, 4, 8);
-        const bodyMat = new THREE.MeshLambertMaterial({color: 0x8e44ad}); // Purple potato
-        const body = new THREE.Mesh(bodyGeo, bodyMat);
-        // Head
-        const headGeo = new THREE.SphereGeometry(0.4);
-        const headMat = new THREE.MeshLambertMaterial({color: 0xffd54f}); // Yellow head
-        const head = new THREE.Mesh(headGeo, headMat);
-        head.position.y = 0.8;
-        // Wings
+        const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.5, 1, 4, 8), new THREE.MeshLambertMaterial({color: 0x8e44ad}));
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.4), new THREE.MeshLambertMaterial({color: 0xffd54f})); head.position.y = 0.8;
         const wingGeo = new THREE.CircleGeometry(0.6, 32, 0, Math.PI);
         const wingMat = new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0.5, side:THREE.DoubleSide});
         const lWing = new THREE.Mesh(wingGeo, wingMat); lWing.position.set(-0.4, 0.5, -0.2); lWing.rotation.y = 0.5;
         const rWing = new THREE.Mesh(wingGeo, wingMat); rWing.position.set(0.4, 0.5, -0.2); rWing.rotation.y = -0.5;
-
         fairyGrp.add(body, head, lWing, rWing);
-        fairyGrp.position.set(0, -5, -190); // Hidden way back
+        fairyGrp.position.set(0, -5, -190);
         scene.add(fairyGrp);
 
-
-        // INTERACTION: Raycaster for Clicking Photos
+        // CLICKS
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
-        
         window.addEventListener('click', (event) => {
             if(!isStarted) return;
-            
-            // Calculate mouse position
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-            
             raycaster.setFromCamera(mouse, camera);
             const intersects = raycaster.intersectObjects(photoMeshes);
-
             if(intersects.length > 0) {
-                const url = intersects[0].object.userData.src;
-                const zoomOverlay = document.getElementById('zoom-overlay');
-                const zoomImg = document.getElementById('zoom-img');
-                zoomImg.src = url;
-                zoomOverlay.style.display = 'flex';
+                document.getElementById('zoom-img').src = intersects[0].object.userData.src;
+                document.getElementById('zoom-overlay').style.display = 'flex';
             }
         });
 
-        document.getElementById('zoom-overlay').addEventListener('click', () => {
-            document.getElementById('zoom-overlay').style.display = 'none';
-        });
-
-        // ANIMATION & SCROLL
-        let isStarted=false; let scrollY=0; let targetZ=20;
-        const maxScroll = 210; // Extended scroll range
-
-        document.getElementById('huzzah-btn').addEventListener('click', () => {
-            isStarted=true; targetZ=10;
-            document.getElementById('start-screen').style.opacity=0;
-            setTimeout(()=>{document.getElementById('start-screen').style.display='none'},1000);
-        });
-
+        // SCROLL
+        let scrollY = 0;
+        const maxScroll = 210;
         function handleScroll(delta) {
             if(!isStarted) return;
             scrollY += delta * 0.05;
             scrollY = Math.max(0, Math.min(scrollY, maxScroll));
             targetZ = 10 - scrollY;
-
-            // Trigger Letter at end
             if(scrollY > 190) {
                 document.getElementById('letter-modal').classList.add('visible');
-                // Move Fairy Up
                 gsap.to(fairyGrp.position, {y: 0, duration: 2, ease: "elastic.out(1, 0.5)"});
             }
         }
-
         window.addEventListener('wheel', e => handleScroll(e.deltaY));
         let ty=0;
         window.addEventListener('touchstart', e=>ty=e.touches[0].clientY);
@@ -303,49 +271,43 @@
             ty=e.touches[0].clientY;
         });
 
+        // LOOP
         const clock = new THREE.Clock();
-        const head = document.getElementById('chap-head');
-        const sub = document.getElementById('chap-sub');
-        const txt = document.getElementById('chapter-text');
+        const headTitle = document.getElementById('chap-head');
+        const subTitle = document.getElementById('chap-sub');
+        const txtBox = document.getElementById('chapter-text');
         const bar = document.getElementById('progress-bar');
 
         function animate(){
             requestAnimationFrame(animate);
             const time = clock.getElapsedTime();
-            
             camera.position.z += (targetZ - camera.position.z)*0.05;
-            
-            // Animate Fairy Wings
+
             const wingSpeed = time * 15;
-            fairyGrp.children[2].rotation.z = Math.sin(wingSpeed)*0.5; // Left Wing
-            fairyGrp.children[3].rotation.z = -Math.sin(wingSpeed)*0.5; // Right Wing
-            fairyGrp.position.y += Math.sin(time*2)*0.005; // Bobbing
+            fairyGrp.children[2].rotation.z = Math.sin(wingSpeed)*0.5;
+            fairyGrp.children[3].rotation.z = -Math.sin(wingSpeed)*0.5;
+            fairyGrp.position.y += Math.sin(time*2)*0.005;
 
             if(isStarted){
                 groups.forEach((g,i)=>{
                     g.position.y = Math.sin(time*0.5 + i)*0.5;
                     g.rotation.z = Math.sin(time*0.1 + i)*0.02;
-
-                    // Text & Color Logic
                     if(Math.abs(g.position.z - camera.position.z) < 20){
                         scene.background.lerp(new THREE.Color(memories[i].color), 0.05);
                         scene.fog.color.lerp(new THREE.Color(memories[i].color), 0.05);
-                        
                         if(Math.abs(g.position.z - camera.position.z) < 10){
-                            if(head.innerText !== memories[i].title){
-                                txt.classList.remove('active');
+                            if(headTitle.innerText !== memories[i].title){
+                                txtBox.classList.remove('active');
                                 setTimeout(()=>{
-                                    head.innerText=memories[i].title;
-                                    sub.innerText=memories[i].sub;
-                                    txt.classList.add('active');
+                                    headTitle.innerText=memories[i].title;
+                                    subTitle.innerText=memories[i].sub;
+                                    txtBox.classList.add('active');
                                 }, 500);
-                            } else if(!txt.classList.contains('active')) txt.classList.add('active');
+                            } else if(!txtBox.classList.contains('active')) txtBox.classList.add('active');
                         }
                     }
                 });
-                
-                const pct = (scrollY/maxScroll)*100;
-                bar.style.height = Math.min(pct,100)+"%";
+                bar.style.height = Math.min((scrollY/maxScroll)*100,100)+"%";
             }
             renderer.render(scene, camera);
         }
