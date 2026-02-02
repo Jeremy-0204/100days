@@ -3,24 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>100 Days: The Exhibition</title>
+    <title>100 Days: The Exhibition (Free Look)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Lato:wght@300;400;700&display=swap');
 
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
-            background: #000; /* Dark start */
+            background: #000;
             font-family: 'Lato', sans-serif;
             user-select: none; -webkit-user-select: none;
         }
 
-        /* --- UI LAYER --- */
+        /* UI LAYER */
         #ui-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10;
             pointer-events: none;
         }
 
-        /* HEADER */
         #header-info {
             position: absolute; top: 40px; left: 50%; transform: translateX(-50%);
             text-align: center; width: 100%; pointer-events: none;
@@ -35,13 +34,12 @@
             font-size: 1.1rem; color: #d4af37; letter-spacing: 5px; text-transform: uppercase; margin-top: 5px; font-weight: 700;
         }
 
-        /* CONTROLS GUIDE */
         #controls-hint {
             position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
             color: rgba(255,255,255,0.6); font-size: 0.8rem; letter-spacing: 2px;
             background: rgba(0,0,0,0.6); padding: 12px 25px; border-radius: 50px;
             text-transform: uppercase; border: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(5px); pointer-events: none;
         }
 
         /* JUMP BUTTONS */
@@ -69,7 +67,6 @@
             transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
         #huzzah-img:hover { transform: scale(1.05) translateY(-10px); }
-        
         .click-hint {
             margin-top: 40px; font-family: 'Playfair Display', serif; font-style: italic;
             color: #d4af37; font-size: 1.5rem; animation: pulse 2s infinite; font-weight: bold;
@@ -79,8 +76,7 @@
         /* LETTER MODAL */
         #letter-modal {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 90%; max-width: 600px; 
-            background: #fffbf0;
+            width: 90%; max-width: 600px; background: #fffbf0;
             padding: 60px; border-radius: 8px; box-shadow: 0 50px 100px rgba(0,0,0,0.9);
             border: 1px solid #d4af37; z-index: 200; text-align: center; opacity: 0; pointer-events: none;
             transition: opacity 1s; display: none;
@@ -104,8 +100,7 @@
         }
         #zoom-overlay.active { opacity: 1; }
         #zoom-img { 
-            max-width: 90%; max-height: 85%; 
-            border: 20px solid #fff; 
+            max-width: 90%; max-height: 85%; border: 20px solid #fff; 
             box-shadow: 0 0 100px rgba(0,0,0,1); cursor: default; 
         }
         #close-hint { color: #666; margin-top: 30px; font-size: 0.8rem; letter-spacing: 4px; text-transform: uppercase; }
@@ -131,7 +126,7 @@
             <h1 id="chap-head">The Journey</h1>
             <p id="chap-sub">100 Days of Adventure</p>
         </div>
-        <div id="controls-hint">Use WASD or Arrows to Fly</div>
+        <div id="controls-hint">Drag to Look • WASD to Fly</div>
         <div id="prev-jump" class="nav-btn" onclick="jumpTo(-1)">‹</div>
         <div id="next-jump" class="nav-btn" onclick="jumpTo(1)">›</div>
     </div>
@@ -162,6 +157,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
     <script>
         // --- STARTUP LOGIC ---
@@ -183,8 +179,8 @@
             screen.style.opacity = 0;
             setTimeout(() => { screen.style.display = 'none'; }, 1500);
             
-            // Initial Camera Fly-in
-            gsap.to(camera.position, {z: 30, y: 5, duration: 3, ease: "power2.out"});
+            // Camera Zoom In
+            gsap.to(camera.position, {z: 30, y: 15, duration: 3, ease: "power2.out"});
         }
 
         function closeZoom() {
@@ -225,19 +221,26 @@
 
         // --- 3D SETUP ---
         const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x050505, 0.006); // Dark elegant fog
+        scene.fog = new THREE.FogExp2(0x050505, 0.005); 
 
         const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 3000);
-        camera.position.set(0, 50, 100); // Start high up
+        camera.position.set(0, 50, 100); 
 
         const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true, powerPreference: "high-performance"});
         renderer.setSize(window.innerWidth, window.innerHeight);
-        // CRITICAL FIX: Set Pixel Ratio for Retina Displays (Fixes Blur)
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); 
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.getElementById('canvas-container').appendChild(renderer.domElement);
 
+        // CONTROLS (THE FIX)
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.enablePan = false; // We pan via WASD
+        controls.minDistance = 10;
+        controls.maxDistance = 100;
+        
         // LIGHTS
         const amb = new THREE.AmbientLight(0xffffff, 0.6); scene.add(amb);
         const dir = new THREE.DirectionalLight(0xffd700, 1.2);
@@ -256,12 +259,9 @@
             scene.add(player);
             
             const loader = new THREE.TextureLoader();
-            // Try loading choonsik.png, fallback to heart if missing
             const tex = loader.load('choonsik.png', undefined, undefined, () => {
-                return loader.load('https://cdn-icons-png.flaticon.com/512/2589/2589175.png'); // Cute heart fallback
+                return loader.load('https://cdn-icons-png.flaticon.com/512/2589/2589175.png');
             });
-            
-            // High Quality Texture settings
             tex.minFilter = THREE.LinearFilter;
             tex.magFilter = THREE.LinearFilter;
 
@@ -271,7 +271,6 @@
             playerSprite.position.y = 3; 
             player.add(playerSprite);
             
-            // Shadow Blob
             const shadGeo = new THREE.CircleGeometry(2, 32);
             const shadMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.3 });
             const shadow = new THREE.Mesh(shadGeo, shadMat);
@@ -283,31 +282,24 @@
         }
         createPlayer();
 
-        // --- PROCEDURAL ASSET GENERATORS (High Quality) ---
+        // --- ASSETS ---
         function createGiftBox(color) {
             const grp = new THREE.Group();
             const mat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.3 });
             const box = new THREE.Mesh(new THREE.BoxGeometry(3,3,3), mat);
-            box.castShadow = true;
-            grp.add(box);
-            // Ribbon
+            box.castShadow = true; grp.add(box);
             const ribMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-            const r1 = new THREE.Mesh(new THREE.BoxGeometry(3.1, 3.1, 0.5), ribMat);
-            const r2 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 3.1, 3.1), ribMat);
-            grp.add(r1, r2);
+            grp.add(new THREE.Mesh(new THREE.BoxGeometry(3.1, 3.1, 0.5), ribMat));
+            grp.add(new THREE.Mesh(new THREE.BoxGeometry(0.5, 3.1, 3.1), ribMat));
             return grp;
         }
 
         function createLantern(color) {
             const grp = new THREE.Group();
-            // Glowing Core
             const core = new THREE.Mesh(new THREE.DodecahedronGeometry(1.5), new THREE.MeshBasicMaterial({ color: color }));
-            // Frame
             const frame = new THREE.Mesh(new THREE.DodecahedronGeometry(1.6), new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: true }));
             grp.add(core, frame);
-            // Light
-            const light = new THREE.PointLight(color, 2, 20);
-            grp.add(light);
+            grp.add(new THREE.PointLight(color, 2, 20));
             return grp;
         }
 
@@ -316,23 +308,20 @@
             const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 });
             const b1 = new THREE.Mesh(new THREE.SphereGeometry(1.5, 32, 32), mat); b1.position.y = 1.5;
             const b2 = new THREE.Mesh(new THREE.SphereGeometry(1.0, 32, 32), mat); b2.position.y = 3.5;
-            // Hat
-            const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 1, 32), new THREE.MeshStandardMaterial({ color: 0x333333 }));
-            hat.position.y = 4.8;
+            const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 1, 32), new THREE.MeshStandardMaterial({ color: 0x333333 })); hat.position.y = 4.8;
             grp.add(b1, b2, hat);
             return grp;
         }
 
         function createBook() {
             const grp = new THREE.Group();
-            const coverColor = Math.random() * 0xffffff;
-            const cover = new THREE.Mesh(new THREE.BoxGeometry(2, 0.3, 3), new THREE.MeshStandardMaterial({ color: coverColor }));
+            const cover = new THREE.Mesh(new THREE.BoxGeometry(2, 0.3, 3), new THREE.MeshStandardMaterial({ color: Math.random()*0xffffff }));
             const pages = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.25, 2.8), new THREE.MeshStandardMaterial({ color: 0xffffff }));
             grp.add(cover, pages);
             return grp;
         }
 
-        // --- WORLD BUILDER ---
+        // --- WORLD ---
         const textureLoader = new THREE.TextureLoader();
         const photoMeshes = [];
 
@@ -342,7 +331,6 @@
                 if(index >= extensions.length) { mesh.material.color.setHex(0x222222); return; }
                 const url = baseName + extensions[index];
                 textureLoader.load(url, (tex) => {
-                    // CRITICAL FIX: Anisotropy for sharpness at angles
                     tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
                     tex.minFilter = THREE.LinearFilter;
                     tex.magFilter = THREE.LinearFilter;
@@ -356,7 +344,6 @@
                     mesh.material.color.setHex(0xffffff);
                     mesh.material.needsUpdate = true;
                     
-                    // Update frame
                     mesh.children[0].geometry.dispose();
                     mesh.children[0].geometry = new THREE.BoxGeometry(w+0.5, h+0.5, 0.2);
                     
@@ -372,18 +359,13 @@
             const group = new THREE.Group();
             group.position.set(mem.pos.x, mem.pos.y, mem.pos.z);
 
-            // 1. Fancy Floor
             const platGeo = new THREE.CylinderGeometry(25, 22, 1, 64);
-            const platMat = new THREE.MeshPhysicalMaterial({ 
-                color: 0x111111, roughness: 0.1, metalness: 0.5,
-                transparent: true, opacity: 0.9, clearcoat: 1.0
-            });
+            const platMat = new THREE.MeshPhysicalMaterial({ color: 0x111111, roughness: 0.1, metalness: 0.5, transparent: true, opacity: 0.9, clearcoat: 1.0 });
             const platform = new THREE.Mesh(platGeo, platMat);
             platform.position.y = -6;
             platform.receiveShadow = true;
             group.add(platform);
 
-            // 2. Decor Assets
             if (mem.id === 'birthday') {
                 for(let i=0; i<6; i++) {
                     const box = createGiftBox(mem.color);
@@ -412,7 +394,6 @@
                 }
             }
 
-            // 3. Photos (Wide Arc)
             const count = mem.photos.length;
             const radius = 16;
             const angleStep = (Math.PI * 1.2) / count;
@@ -423,12 +404,10 @@
                 const x = Math.sin(angle) * radius;
                 const z = Math.cos(angle) * radius - 10;
                 
-                // Canvas
                 const mesh = new THREE.Mesh(new THREE.PlaneGeometry(5,3.5), new THREE.MeshBasicMaterial({color: 0x333333}));
                 mesh.position.set(x, (Math.random()-0.5)*2, z);
-                mesh.lookAt(0,0,40); // Look towards viewer entrance
+                mesh.lookAt(0,0,40); 
                 
-                // Gold Frame
                 const frameMat = new THREE.MeshStandardMaterial({color: 0xffd700, metalness: 0.9, roughness: 0.1});
                 const frame = new THREE.Mesh(new THREE.BoxGeometry(5.2, 3.7, 0.2), frameMat);
                 frame.position.z = -0.15;
@@ -447,12 +426,9 @@
         window.addEventListener('keydown', e => { if(keys.hasOwnProperty(e.key)) keys[e.key] = true; });
         window.addEventListener('keyup', e => { if(keys.hasOwnProperty(e.key)) keys[e.key] = false; });
 
-        // Jump Logic
         let currentMemIndex = -1;
-        
         window.jumpTo = function(dir) {
             let nextIdx = Math.max(0, Math.min(currentMemIndex + dir, memories.length-1));
-            // Force jump even if same index (re-center)
             const mem = memories[nextIdx];
             gsap.to(player.position, {
                 x: mem.pos.x, y: mem.pos.y + 5, z: mem.pos.z + 30,
@@ -467,6 +443,8 @@
         window.addEventListener('click', e => {
             if(!isStarted || e.target.closest('.nav-btn')) return;
             
+            // Don't click if user was dragging (OrbitControls)
+            // But simplistic approach: raycast anyway
             mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(mouse, camera);
@@ -479,7 +457,7 @@
             }
         });
 
-        // --- ANIMATION LOOP ---
+        // --- LOOP ---
         const clock = new THREE.Clock();
         const head = document.getElementById('chap-head');
         const sub = document.getElementById('chap-sub');
@@ -489,31 +467,43 @@
             const time = clock.getElapsedTime();
 
             if(isStarted) {
-                // 1. Player Movement
+                // 1. Player Movement (Relative to Camera View)
                 const moveVec = new THREE.Vector3(0,0,0);
                 if(keys.w || keys.ArrowUp) moveVec.z -= 1;
                 if(keys.s || keys.ArrowDown) moveVec.z += 1;
                 if(keys.a || keys.ArrowLeft) moveVec.x -= 1;
                 if(keys.d || keys.ArrowRight) moveVec.x += 1;
 
-                moveVec.normalize().multiplyScalar(playerSpeed);
-                player.position.add(moveVec);
+                if (moveVec.length() > 0) {
+                    moveVec.normalize().multiplyScalar(playerSpeed);
+                    
+                    // Transform direction based on camera Y-rotation
+                    const camY = camera.rotation.y; 
+                    // This is simple approx for OrbitControls:
+                    // Actually we need to move relative to camera's forward vector projected on XZ plane
+                    const forward = new THREE.Vector3();
+                    camera.getWorldDirection(forward);
+                    forward.y = 0; forward.normalize();
+                    
+                    const right = new THREE.Vector3();
+                    right.crossVectors(forward, new THREE.Vector3(0,1,0)).normalize();
+                    
+                    const finalMove = new THREE.Vector3();
+                    finalMove.addScaledVector(forward, -moveVec.z);
+                    finalMove.addScaledVector(right, moveVec.x); // Corrected: A/D mapped to Right vector
+                    
+                    player.position.add(finalMove);
+                }
 
-                // Boundary Check (Basic)
                 if(player.position.y < -50) player.position.y = 50;
-
-                // Bobbing
                 playerSprite.position.y = 3 + Math.sin(time * 5) * 0.3;
 
-                // 2. Camera Follow (Smooth)
-                const idealOffset = new THREE.Vector3(0, 15, 40);
-                const idealLook = new THREE.Vector3(0, 0, -50);
-                
-                const targetPos = player.position.clone().add(idealOffset);
-                camera.position.lerp(targetPos, 0.05);
-                camera.lookAt(player.position.clone().add(idealLook));
+                // 2. Sync OrbitControls target to Player
+                // This makes the camera follow the player, but you can still rotate
+                controls.target.lerp(player.position, 0.1);
+                controls.update();
 
-                // 3. Check Location for Text
+                // 3. UI Updates
                 let closestIdx = -1;
                 let minDist = 60;
                 memories.forEach((mem, i) => {
@@ -533,11 +523,9 @@
                             info.style.opacity = 1;
                         }, 500);
                         
-                        // Show/Hide Jump Buttons
                         document.getElementById('prev-jump').style.display = closestIdx > 0 ? 'flex' : 'none';
                         document.getElementById('next-jump').style.display = closestIdx < memories.length-1 ? 'flex' : 'none';
                         if(closestIdx === memories.length-1) {
-                            // Show Letter Trigger?
                             setTimeout(() => document.getElementById('letter-modal').classList.add('visible'), 2000);
                         }
                     }
