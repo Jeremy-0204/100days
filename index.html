@@ -5,98 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>100 Days with Kaitlin</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Lato:wght@300;400&display=swap');
-
-        body, html {
-            margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
-            background-color: #fdfbfb; font-family: 'Lato', sans-serif;
-        }
-
-        /* --- UI OVERLAYS --- */
-        #ui-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10;
-            pointer-events: none; display: flex; justify-content: center; align-items: center;
-        }
-
-        /* START SCREEN */
-        #start-screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 100;
-            background: #fff; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; transition: opacity 1s;
-        }
-        #huzzah-btn {
-            background: none; border: none; cursor: pointer; pointer-events: auto;
-            transition: transform 0.2s; position: relative; z-index: 101;
-        }
-        #huzzah-btn:hover { transform: scale(1.05); }
-        #huzzah-btn img {
-            width: 280px; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.15);
-        }
-        .click-hint {
-            margin-top: 25px; font-family: 'Playfair Display', serif; font-style: italic;
-            color: #888; font-size: 1.1rem; animation: pulse 2s infinite;
-        }
-
-        /* CHAPTER TEXT */
-        .chapter-container {
-            position: absolute; bottom: 10%; text-align: center; opacity: 0;
-            transform: translateY(20px); transition: all 0.8s ease; width: 100%;
-        }
-        .chapter-container.active { opacity: 1; transform: translateY(0); }
-        .chapter-container h2 {
-            font-family: 'Playfair Display', serif; font-size: 4rem; margin: 0;
-            background: -webkit-linear-gradient(45deg, #333, #666);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            text-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-        .chapter-container p {
-            font-size: 1.1rem; letter-spacing: 4px; text-transform: uppercase;
-            color: #d4af37; margin-top: 10px; font-weight: bold;
-        }
-
-        /* LETTER MODAL */
-        #letter-modal {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 80%; max-width: 600px; background: rgba(255,255,255,0.95);
-            padding: 40px; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-            z-index: 200; text-align: center; opacity: 0; pointer-events: none;
-            transition: opacity 1s; display: none;
-        }
-        #letter-modal.visible { opacity: 1; pointer-events: auto; display: block; }
-        .letter-content h3 { font-family: 'Playfair Display', serif; font-size: 2.5rem; color: #d4af37; margin-bottom: 20px; }
-        .letter-content p { font-size: 1.1rem; line-height: 1.8; color: #444; margin-bottom: 30px; }
-        .close-btn {
-            background: #d4af37; color: white; border: none; padding: 10px 30px;
-            border-radius: 20px; cursor: pointer; font-size: 1rem;
-        }
-
-        /* ZOOM OVERLAY */
-        #zoom-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); z-index: 150; display: none;
-            justify-content: center; align-items: center; cursor: zoom-out;
-        }
-        #zoom-img { max-width: 90%; max-height: 90%; border: 5px solid white; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
-
-        #progress-container {
-            position: absolute; right: 30px; top: 50%; transform: translateY(-50%);
-            height: 200px; width: 3px; background: rgba(0,0,0,0.05);
-        }
-        #progress-bar { width: 100%; height: 0%; background: #d4af37; transition: height 0.1s; border-radius: 3px; }
-
-        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
-        
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #fdfbfb; font-family: sans-serif; }
+        #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; background: white; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; }
+        #huzzah-img { width: 280px; border-radius: 20px; }
+        .click-hint { margin-top: 20px; color: #888; font-weight: bold; }
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; justify-content: center; align-items: center; z-index: 10; }
+        .chapter-container { position: absolute; bottom: 10%; text-align: center; opacity: 0; transition: opacity 0.5s; }
+        .chapter-container.active { opacity: 1; }
+        .chapter-container h2 { font-size: 3rem; margin: 0; color: #333; }
+        .chapter-container p { color: #d4af37; font-weight: bold; letter-spacing: 2px; }
+        #progress-bar { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); width: 4px; height: 0%; background: #d4af37; }
+        #progress-bg { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); width: 4px; height: 150px; background: #eee; }
         #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        
+        /* Error Log for Debugging */
+        #debug-log {
+            position: absolute; top: 10px; left: 10px; z-index: 200;
+            background: rgba(0,0,0,0.7); color: #ff5555; padding: 10px;
+            border-radius: 5px; font-size: 12px; pointer-events: none;
+            display: none; /* Hidden by default, shows if error */
+        }
     </style>
 </head>
 <body>
 
-    <div id="start-screen">
-        <button id="huzzah-btn" onclick="startGame()">
-            <img src="huzzah.gif" alt="CLICK TO START" 
-                 onerror="this.src='https://media.giphy.com/media/MdGZp0GkF2L7i/giphy.gif'">
-        </button>
-        <div class="click-hint">Click to say "Let's Go" (가자!)</div>
+    <div id="debug-log"></div>
+
+    <div id="start-screen" onclick="startGame()">
+        <img id="huzzah-img" src="huzzah.gif" onerror="this.src='https://media.giphy.com/media/MdGZp0GkF2L7i/giphy.gif'">
+        <div class="click-hint">CLICK ANYWHERE TO START</div>
     </div>
 
     <div id="ui-layer">
@@ -104,46 +41,15 @@
             <h2 id="chap-head">Title</h2>
             <p id="chap-sub">Subtitle</p>
         </div>
-        <div id="progress-container"><div id="progress-bar"></div></div>
+        <div id="progress-bg"></div>
+        <div id="progress-bar"></div>
     </div>
 
-    <div id="letter-modal">
-        <div class="letter-content">
-            <h3>Happy 100 Days, Kaitlin</h3>
-            <p>
-                From that first "HUZZAH" to our quiet moments studying in Sinchon, every day has been an adventure.
-                <br><br>
-                Even when things were scary in the ER, or cold in Daegu, being with you made it warm.
-                You are my favorite person to eat tacos with, to study with, and to build a future with.
-                <br><br>
-                Here is to 100 days, and thousands more.
-                <br>
-                I love you.
-            </p>
-            <button class="close-btn" onclick="document.getElementById('letter-modal').classList.remove('visible')">Close</button>
-        </div>
-    </div>
-
-    <div id="zoom-overlay" onclick="this.style.display='none'"><img id="zoom-img" src=""></div>
     <div id="canvas-container"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 
     <script>
-        // --- GLOBAL START FUNCTION ---
-        let isStarted = false;
-        let targetZ = 20;
-        
-        function startGame() {
-            console.log("Starting...");
-            isStarted = true; 
-            targetZ = 10;
-            const screen = document.getElementById('start-screen');
-            screen.style.opacity = 0;
-            setTimeout(() => { screen.style.display = 'none'; }, 1000);
-        }
-
         // CONFIG
         const memories = [
             { id: 'birthday', title: "The Birthday", sub: "Green Cakes & Red Lights", color: 0xffebee, z: 0, 
@@ -158,162 +64,132 @@
               photos: ["12851.jpg", "12900.jpg", "12913.jpg", "13110.jpg", "13069.jpg", "12969.jpg", "12999.jpg", "13051.jpg", "13098.jpg", "13118.jpg"] }
         ];
 
-        // 3D SETUP
+        // SETUP
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0xfdfbfb);
         scene.fog = new THREE.FogExp2(0xfdfbfb, 0.025);
-
         const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 1000);
         camera.position.z = 20;
-
-        const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+        const renderer = new THREE.WebGLRenderer({antialias:true});
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true;
         document.getElementById('canvas-container').appendChild(renderer.domElement);
+        
+        const amb = new THREE.AmbientLight(0xffffff, 0.8); scene.add(amb);
+        const dir = new THREE.DirectionalLight(0xffd700, 0.5); dir.position.set(10,20,10); scene.add(dir);
 
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-        scene.add(ambientLight);
-        const dirLight = new THREE.DirectionalLight(0xffd700, 0.8);
-        dirLight.position.set(10,20,10); dirLight.castShadow=true; scene.add(dirLight);
-
-        // LOADER
+        // LOADER WITH FALLBACK
         const loader = new THREE.TextureLoader();
         const groups = [];
-        const photoMeshes = [];
+
+        function logError(msg) {
+            const el = document.getElementById('debug-log');
+            el.style.display = 'block';
+            el.innerHTML += msg + "<br>";
+        }
 
         memories.forEach(mem => {
             const grp = new THREE.Group();
             grp.position.z = mem.z;
-            
-            mem.photos.forEach(file => {
-                loader.load(file, tex => {
-                    const aspect = tex.image.width/tex.image.height;
-                    const w = 5; const h = w/aspect;
-                    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w,h), new THREE.MeshLambertMaterial({map:tex, side:THREE.DoubleSide}));
-                    mesh.position.set((Math.random()-0.5)*14, (Math.random()-0.5)*8, Math.random()*3);
-                    mesh.rotation.z = (Math.random()-0.5)*0.4;
-                    mesh.castShadow=true; mesh.receiveShadow=true;
-                    mesh.userData = { src: file };
-                    const frame = new THREE.Mesh(new THREE.PlaneGeometry(w+0.3, h+0.3), new THREE.MeshBasicMaterial({color:0xffffff}));
-                    frame.position.z = -0.05; mesh.add(frame);
-                    grp.add(mesh);
-                    photoMeshes.push(mesh);
-                }, undefined, err => console.log("Missing " + file));
-            });
 
-            // HEARTS
-            for(let i=0; i<10; i++){
-                const shape = new THREE.Shape();
-                const x=0, y=0;
-                shape.moveTo(x+0.25, y+0.25);
-                shape.bezierCurveTo(x+0.25, y+0.25, x+0.20, y, x, y);
-                shape.bezierCurveTo(x-0.30, y, x-0.30, y+0.35, x-0.30, y+0.35);
-                shape.bezierCurveTo(x-0.30, y+0.55, x-0.10, y+0.77, x+0.25, y+0.95);
-                shape.bezierCurveTo(x+0.60, y+0.77, x+0.80, y+0.55, x+0.80, y+0.35);
-                shape.bezierCurveTo(x+0.80, y+0.35, x+0.80, y, x+0.50, y);
-                shape.bezierCurveTo(x+0.35, y, x+0.25, y+0.25, x+0.25, y+0.25);
-                const heart = new THREE.Mesh(new THREE.ShapeGeometry(shape), new THREE.MeshBasicMaterial({color: 0xff69b4, transparent:true, opacity:0.6}));
-                heart.scale.set(0.5,0.5,0.5);
-                heart.position.set((Math.random()-0.5)*25, (Math.random()-0.5)*15, (Math.random()-0.5)*10);
-                heart.rotation.z = Math.PI;
-                grp.add(heart);
-            }
+            mem.photos.forEach(file => {
+                loader.load(file, (tex) => {
+                    // Success
+                    createMesh(tex, grp, file);
+                }, undefined, (err) => {
+                    // ERROR: Load Pink Square instead
+                    console.log("Error loading " + file);
+                    logError("Missing: " + file);
+                    const pinkTex = new THREE.TextureLoader().load('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='); // 1x1 Pink Pixel
+                    createMesh(pinkTex, grp, file, true);
+                });
+            });
             scene.add(grp);
             groups.push(grp);
         });
 
-        // FAIRY
-        const fairyGrp = new THREE.Group();
-        const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.5, 1, 4, 8), new THREE.MeshLambertMaterial({color: 0x8e44ad}));
-        const head = new THREE.Mesh(new THREE.SphereGeometry(0.4), new THREE.MeshLambertMaterial({color: 0xffd54f})); head.position.y = 0.8;
-        const wingGeo = new THREE.CircleGeometry(0.6, 32, 0, Math.PI);
-        const wingMat = new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0.5, side:THREE.DoubleSide});
-        const lWing = new THREE.Mesh(wingGeo, wingMat); lWing.position.set(-0.4, 0.5, -0.2); lWing.rotation.y = 0.5;
-        const rWing = new THREE.Mesh(wingGeo, wingMat); rWing.position.set(0.4, 0.5, -0.2); rWing.rotation.y = -0.5;
-        fairyGrp.add(body, head, lWing, rWing);
-        fairyGrp.position.set(0, -5, -190);
-        scene.add(fairyGrp);
-
-        // CLICKS
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-        window.addEventListener('click', (event) => {
-            if(!isStarted) return;
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(photoMeshes);
-            if(intersects.length > 0) {
-                document.getElementById('zoom-img').src = intersects[0].object.userData.src;
-                document.getElementById('zoom-overlay').style.display = 'flex';
-            }
-        });
-
-        // SCROLL
-        let scrollY = 0;
-        const maxScroll = 210;
-        function handleScroll(delta) {
-            if(!isStarted) return;
-            scrollY += delta * 0.05;
-            scrollY = Math.max(0, Math.min(scrollY, maxScroll));
-            targetZ = 10 - scrollY;
-            if(scrollY > 190) {
-                document.getElementById('letter-modal').classList.add('visible');
-                gsap.to(fairyGrp.position, {y: 0, duration: 2, ease: "elastic.out(1, 0.5)"});
-            }
+        function createMesh(tex, grp, name, isError=false) {
+            const aspect = isError ? 1 : tex.image.width / tex.image.height;
+            const w = 5; const h = w / aspect;
+            const mat = new THREE.MeshBasicMaterial({ 
+                map: tex, 
+                side: THREE.DoubleSide,
+                color: isError ? 0xff00ff : 0xffffff // Pink if error
+            });
+            const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w,h), mat);
+            mesh.position.set((Math.random()-0.5)*12, (Math.random()-0.5)*6, Math.random()*2);
+            mesh.rotation.z = (Math.random()-0.5)*0.3;
+            
+            // Frame
+            const frame = new THREE.Mesh(new THREE.PlaneGeometry(w+0.2, h+0.2), new THREE.MeshBasicMaterial({color:0xffffff}));
+            frame.position.z = -0.05; mesh.add(frame);
+            
+            grp.add(mesh);
         }
-        window.addEventListener('wheel', e => handleScroll(e.deltaY));
+
+        // ANIMATION
+        let isStarted = false; let scrollY = 0; let targetZ = 20;
+        
+        function startGame() {
+            isStarted = true;
+            targetZ = 10;
+            document.getElementById('start-screen').style.display = 'none';
+        }
+
+        window.addEventListener('wheel', e => {
+            if(!isStarted) return;
+            scrollY += e.deltaY * 0.05;
+            scrollY = Math.max(0, Math.min(scrollY, 200));
+            targetZ = 10 - scrollY;
+        });
+        
         let ty=0;
         window.addEventListener('touchstart', e=>ty=e.touches[0].clientY);
         window.addEventListener('touchmove', e=>{
-            const d = ty - e.touches[0].clientY;
-            handleScroll(d * 3);
+            if(!isStarted) return;
+            scrollY += (ty - e.touches[0].clientY) * 0.1;
+            scrollY = Math.max(0, Math.min(scrollY, 200));
+            targetZ = 10 - scrollY;
             ty=e.touches[0].clientY;
         });
 
-        // LOOP
         const clock = new THREE.Clock();
-        const headTitle = document.getElementById('chap-head');
-        const subTitle = document.getElementById('chap-sub');
-        const txtBox = document.getElementById('chapter-text');
+        const head = document.getElementById('chap-head');
+        const sub = document.getElementById('chap-sub');
+        const txt = document.getElementById('chapter-text');
         const bar = document.getElementById('progress-bar');
 
-        function animate(){
+        function animate() {
             requestAnimationFrame(animate);
             const time = clock.getElapsedTime();
-            camera.position.z += (targetZ - camera.position.z)*0.05;
+            camera.position.z += (targetZ - camera.position.z) * 0.05;
 
-            const wingSpeed = time * 15;
-            fairyGrp.children[2].rotation.z = Math.sin(wingSpeed)*0.5;
-            fairyGrp.children[3].rotation.z = -Math.sin(wingSpeed)*0.5;
-            fairyGrp.position.y += Math.sin(time*2)*0.005;
-
-            if(isStarted){
-                groups.forEach((g,i)=>{
-                    g.position.y = Math.sin(time*0.5 + i)*0.5;
-                    g.rotation.z = Math.sin(time*0.1 + i)*0.02;
-                    if(Math.abs(g.position.z - camera.position.z) < 20){
+            if(isStarted) {
+                groups.forEach((g,i) => {
+                    g.position.y = Math.sin(time + i)*0.5;
+                    
+                    if(Math.abs(g.position.z - camera.position.z) < 20) {
                         scene.background.lerp(new THREE.Color(memories[i].color), 0.05);
                         scene.fog.color.lerp(new THREE.Color(memories[i].color), 0.05);
-                        if(Math.abs(g.position.z - camera.position.z) < 10){
-                            if(headTitle.innerText !== memories[i].title){
-                                txtBox.classList.remove('active');
-                                setTimeout(()=>{
-                                    headTitle.innerText=memories[i].title;
-                                    subTitle.innerText=memories[i].sub;
-                                    txtBox.classList.add('active');
+                        
+                        if(Math.abs(g.position.z - camera.position.z) < 10) {
+                            if(head.innerText !== memories[i].title) {
+                                txt.classList.remove('active');
+                                setTimeout(() => {
+                                    head.innerText = memories[i].title;
+                                    sub.innerText = memories[i].sub;
+                                    txt.classList.add('active');
                                 }, 500);
-                            } else if(!txtBox.classList.contains('active')) txtBox.classList.add('active');
+                            } else if (!txt.classList.contains('active')) txt.classList.add('active');
                         }
                     }
                 });
-                bar.style.height = Math.min((scrollY/maxScroll)*100,100)+"%";
+                bar.style.height = (scrollY/200)*100 + "%";
             }
             renderer.render(scene, camera);
         }
         animate();
-        window.addEventListener('resize', ()=>{
-            camera.aspect=window.innerWidth/window.innerHeight;
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth/window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
