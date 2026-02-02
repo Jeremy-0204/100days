@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>100 Days: The Exhibition (Final Polish)</title>
+    <title>100 Days: The Exhibition (Final Fix)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Lato:wght@300;400;700&display=swap');
 
@@ -68,7 +68,6 @@
             transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
         #huzzah-img:hover { transform: scale(1.05) translateY(-10px); }
-        
         .click-hint {
             margin-top: 40px; font-family: 'Playfair Display', serif; font-style: italic;
             color: #d4af37; font-size: 1.5rem; animation: pulse 2s infinite; font-weight: bold;
@@ -129,8 +128,8 @@
             <p id="chap-sub">100 Days of Adventure</p>
         </div>
         <div id="controls-hint">
-            WASD to Move • Space/Shift to Up/Down<br>
-            Drag to Rotate View
+            WASD to Move View • Space/Shift to Up/Down<br>
+            Drag to Look Around
         </div>
         <div id="prev-jump" class="nav-btn" onclick="jumpTo(-1)">‹</div>
         <div id="next-jump" class="nav-btn" onclick="jumpTo(1)">›</div>
@@ -184,8 +183,10 @@
             screen.style.opacity = 0;
             setTimeout(() => { screen.style.display = 'none'; }, 1500);
             
-            // Camera Fly-in
-            gsap.to(camera.position, {z: 40, y: 10, duration: 3, ease: "power2.out"});
+            // Initial Camera Position (Far back)
+            // We set the controls target to 0,0,0 (Birthday) and zoom out
+            gsap.to(camera.position, {z: 80, y: 30, x: 0, duration: 3, ease: "power2.out"});
+            gsap.to(controls.target, {x: 0, y: 0, z: 0, duration: 3});
         }
 
         function closeZoom() {
@@ -226,10 +227,10 @@
 
         // --- 3D SETUP ---
         const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x050505, 0.005); 
+        scene.fog = new THREE.FogExp2(0x050505, 0.003); // Lighter fog for long distance view
 
         const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 3000);
-        camera.position.set(0, 50, 100); 
+        camera.position.set(0, 100, 200); // Start very far
 
         const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true, powerPreference: "high-performance"});
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -238,16 +239,14 @@
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-        // CONTROLS (Updated for sensitivity)
+        // CONTROLS (Updated)
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
-        controls.enablePan = false; 
-        controls.minDistance = 10;
-        controls.maxDistance = 150;
-        controls.rotateSpeed = 0.4; // Lower sensitivity
-        controls.zoomSpeed = 0.5;
-        // Limit camera to prevent going under the floor too much
+        controls.enablePan = false; // We handle movement via WASD to target
+        controls.minDistance = 20;  // Prevent getting too close
+        controls.maxDistance = 200; // Allow seeing the whole island
+        controls.rotateSpeed = 0.4; 
         controls.maxPolarAngle = Math.PI / 1.8; 
         
         // LIGHTS
@@ -259,13 +258,18 @@
         dir.shadow.mapSize.height = 2048;
         scene.add(dir);
 
-        // --- CHOONSIK (PLAYER) ---
-        let player, playerSprite;
-        const playerSpeed = 0.5; // Slower speed
+        // --- FOCUS TARGET (What we look at) ---
+        // Instead of moving "Player", we move a invisible focus point
+        const focusPoint = new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshBasicMaterial({visible: false}));
+        scene.add(focusPoint);
 
-        function createPlayer() {
-            player = new THREE.Group();
-            scene.add(player);
+        // --- CHOONSIK (Follower) ---
+        let choonsik, choonsikSprite;
+        const playerSpeed = 1.5; // Faster island travel
+
+        function createChoonsik() {
+            choonsik = new THREE.Group();
+            scene.add(choonsik);
             
             const loader = new THREE.TextureLoader();
             const tex = loader.load('choonsik.png', undefined, undefined, () => {
@@ -276,20 +280,21 @@
 
             const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide });
             const geo = new THREE.PlaneGeometry(6, 6);
-            playerSprite = new THREE.Mesh(geo, mat);
-            playerSprite.position.y = 3; 
-            player.add(playerSprite);
+            choonsikSprite = new THREE.Mesh(geo, mat);
+            choonsikSprite.position.y = 3; 
+            choonsik.add(choonsikSprite);
             
             const shadGeo = new THREE.CircleGeometry(2, 32);
             const shadMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.3 });
             const shadow = new THREE.Mesh(shadGeo, shadMat);
             shadow.rotation.x = -Math.PI / 2;
             shadow.position.y = 0.1;
-            player.add(shadow);
+            choonsik.add(shadow);
             
-            player.position.set(0, 0, 40); 
+            // Start Choonsik at first island
+            choonsik.position.set(0, 0, 0); 
         }
-        createPlayer();
+        createChoonsik();
 
         // --- ASSETS ---
         function createGiftBox(color) {
@@ -368,6 +373,7 @@
             const group = new THREE.Group();
             group.position.set(mem.pos.x, mem.pos.y, mem.pos.z);
 
+            // Wide Platform to set scene
             const platGeo = new THREE.CylinderGeometry(25, 22, 1, 64);
             const platMat = new THREE.MeshPhysicalMaterial({ color: 0x111111, roughness: 0.1, metalness: 0.5, transparent: true, opacity: 0.9, clearcoat: 1.0 });
             const platform = new THREE.Mesh(platGeo, platMat);
@@ -375,6 +381,7 @@
             platform.receiveShadow = true;
             group.add(platform);
 
+            // Decor
             if (mem.id === 'birthday') {
                 for(let i=0; i<6; i++) {
                     const box = createGiftBox(mem.color);
@@ -403,6 +410,7 @@
                 }
             }
 
+            // Photos - WIDER Arc
             const count = mem.photos.length;
             const radius = 16;
             const angleStep = (Math.PI * 1.2) / count;
@@ -435,14 +443,20 @@
         window.addEventListener('keydown', e => { if(keys.hasOwnProperty(e.key)) keys[e.key] = true; });
         window.addEventListener('keyup', e => { if(keys.hasOwnProperty(e.key)) keys[e.key] = false; });
 
-        let currentMemIndex = -1;
+        let currentMemIndex = 0;
+        
         window.jumpTo = function(dir) {
             let nextIdx = Math.max(0, Math.min(currentMemIndex + dir, memories.length-1));
             const mem = memories[nextIdx];
-            gsap.to(player.position, {
-                x: mem.pos.x, y: mem.pos.y + 5, z: mem.pos.z + 30,
+            
+            // Move Focus Point (Camera follows this)
+            gsap.to(focusPoint.position, {
+                x: mem.pos.x, y: mem.pos.y, z: mem.pos.z,
                 duration: 2, ease: "power2.inOut"
             });
+            
+            // Camera Zoom Adjustment (Back out a bit on jump)
+            gsap.to(controls, { minDistance: 40, duration: 1 }); 
         };
 
         // --- INTERACTION ---
@@ -474,51 +488,58 @@
             const time = clock.getElapsedTime();
 
             if(isStarted) {
-                // 1. Player Movement (Relative to Camera View)
+                // 1. Move Focus Point (WASD)
+                // This moves the invisible "Center" that OrbitControls looks at
                 const moveVec = new THREE.Vector3(0,0,0);
                 if(keys.w || keys.ArrowUp) moveVec.z -= 1;
                 if(keys.s || keys.ArrowDown) moveVec.z += 1;
                 if(keys.a || keys.ArrowLeft) moveVec.x -= 1;
                 if(keys.d || keys.ArrowRight) moveVec.x += 1;
-                
-                // Vertical Move
                 if(keys[" "]) moveVec.y += 1;
                 if(keys.Shift) moveVec.y -= 1;
 
                 if (moveVec.length() > 0) {
                     moveVec.normalize().multiplyScalar(playerSpeed);
                     
+                    // Transform based on camera direction (Standard FPS movement)
                     const forward = new THREE.Vector3();
                     camera.getWorldDirection(forward);
                     forward.y = 0; forward.normalize();
-                    
                     const right = new THREE.Vector3();
                     right.crossVectors(forward, new THREE.Vector3(0,1,0)).normalize();
                     
                     const finalMove = new THREE.Vector3();
                     finalMove.addScaledVector(forward, -moveVec.z);
-                    finalMove.addScaledVector(right, moveVec.x); 
-                    finalMove.y = moveVec.y; // Direct Y control
+                    finalMove.addScaledVector(right, moveVec.x);
+                    finalMove.y = moveVec.y; 
                     
-                    player.position.add(finalMove);
+                    focusPoint.position.add(finalMove);
                 }
 
-                // Prevent going under floor
-                if(player.position.y < -50) player.position.y = 50;
-                
-                // Bobbing & Facing Camera (Billboard)
-                playerSprite.position.y = 3 + Math.sin(time * 5) * 0.3;
-                playerSprite.lookAt(camera.position); // Always face user
-
-                // 2. Sync OrbitControls
-                controls.target.lerp(player.position, 0.1);
+                // 2. Sync Camera Controls
+                // OrbitControls always looks at 'focusPoint', and we move the camera relative to it manually if needed, 
+                // OR just let OrbitControls handle the orbit. 
+                // Here we simply update the controls target to match our invisible WASD character.
+                controls.target.lerp(focusPoint.position, 0.1);
                 controls.update();
 
-                // 3. UI Updates
+                // 3. Move Choonsik (Follower)
+                // Choonsik lerps to the Focus Point, but with a delay + bobbing
+                if(choonsik) {
+                    choonsik.position.lerp(focusPoint.position, 0.05); // Lag behind slightly
+                    
+                    // Bobbing
+                    choonsikSprite.position.y = 3 + Math.sin(time * 5) * 0.3;
+                    
+                    // Face Camera
+                    choonsikSprite.lookAt(camera.position); 
+                }
+
+                // 4. UI Updates
                 let closestIdx = -1;
-                let minDist = 60;
+                let minDist = 80;
                 memories.forEach((mem, i) => {
-                    const d = player.position.distanceTo(new THREE.Vector3(mem.pos.x, mem.pos.y, mem.pos.z));
+                    const d = focusPoint.position.distanceTo(new THREE.Vector3(mem.pos.x, mem.pos.y, mem.pos.z));
                     if(d < minDist) { minDist = d; closestIdx = i; }
                 });
 
