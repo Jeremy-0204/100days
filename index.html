@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>100 Days: The Exhibition (Free Look)</title>
+    <title>100 Days: The Exhibition (Final Polish)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Lato:wght@300;400;700&display=swap');
 
@@ -36,10 +36,11 @@
 
         #controls-hint {
             position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
-            color: rgba(255,255,255,0.6); font-size: 0.8rem; letter-spacing: 2px;
-            background: rgba(0,0,0,0.6); padding: 12px 25px; border-radius: 50px;
+            color: rgba(255,255,255,0.7); font-size: 0.8rem; letter-spacing: 1px;
+            background: rgba(0,0,0,0.7); padding: 12px 30px; border-radius: 50px;
             text-transform: uppercase; border: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(5px); pointer-events: none;
+            backdrop-filter: blur(5px); pointer-events: none; line-height: 1.5;
+            text-align: center;
         }
 
         /* JUMP BUTTONS */
@@ -67,6 +68,7 @@
             transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
         #huzzah-img:hover { transform: scale(1.05) translateY(-10px); }
+        
         .click-hint {
             margin-top: 40px; font-family: 'Playfair Display', serif; font-style: italic;
             color: #d4af37; font-size: 1.5rem; animation: pulse 2s infinite; font-weight: bold;
@@ -126,7 +128,10 @@
             <h1 id="chap-head">The Journey</h1>
             <p id="chap-sub">100 Days of Adventure</p>
         </div>
-        <div id="controls-hint">Drag to Look • WASD to Fly</div>
+        <div id="controls-hint">
+            WASD to Move • Space/Shift to Up/Down<br>
+            Drag to Rotate View
+        </div>
         <div id="prev-jump" class="nav-btn" onclick="jumpTo(-1)">‹</div>
         <div id="next-jump" class="nav-btn" onclick="jumpTo(1)">›</div>
     </div>
@@ -179,8 +184,8 @@
             screen.style.opacity = 0;
             setTimeout(() => { screen.style.display = 'none'; }, 1500);
             
-            // Camera Zoom In
-            gsap.to(camera.position, {z: 30, y: 15, duration: 3, ease: "power2.out"});
+            // Camera Fly-in
+            gsap.to(camera.position, {z: 40, y: 10, duration: 3, ease: "power2.out"});
         }
 
         function closeZoom() {
@@ -233,13 +238,17 @@
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-        // CONTROLS (THE FIX)
+        // CONTROLS (Updated for sensitivity)
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
-        controls.enablePan = false; // We pan via WASD
+        controls.enablePan = false; 
         controls.minDistance = 10;
-        controls.maxDistance = 100;
+        controls.maxDistance = 150;
+        controls.rotateSpeed = 0.4; // Lower sensitivity
+        controls.zoomSpeed = 0.5;
+        // Limit camera to prevent going under the floor too much
+        controls.maxPolarAngle = Math.PI / 1.8; 
         
         // LIGHTS
         const amb = new THREE.AmbientLight(0xffffff, 0.6); scene.add(amb);
@@ -252,7 +261,7 @@
 
         // --- CHOONSIK (PLAYER) ---
         let player, playerSprite;
-        const playerSpeed = 0.8;
+        const playerSpeed = 0.5; // Slower speed
 
         function createPlayer() {
             player = new THREE.Group();
@@ -422,7 +431,7 @@
         });
 
         // --- CONTROLS ---
-        const keys = { w:false, a:false, s:false, d:false, ArrowUp:false, ArrowLeft:false, ArrowDown:false, ArrowRight:false };
+        const keys = { w:false, a:false, s:false, d:false, ArrowUp:false, ArrowLeft:false, ArrowDown:false, ArrowRight:false, " ":false, Shift:false };
         window.addEventListener('keydown', e => { if(keys.hasOwnProperty(e.key)) keys[e.key] = true; });
         window.addEventListener('keyup', e => { if(keys.hasOwnProperty(e.key)) keys[e.key] = false; });
 
@@ -443,8 +452,6 @@
         window.addEventListener('click', e => {
             if(!isStarted || e.target.closest('.nav-btn')) return;
             
-            // Don't click if user was dragging (OrbitControls)
-            // But simplistic approach: raycast anyway
             mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(mouse, camera);
@@ -473,14 +480,14 @@
                 if(keys.s || keys.ArrowDown) moveVec.z += 1;
                 if(keys.a || keys.ArrowLeft) moveVec.x -= 1;
                 if(keys.d || keys.ArrowRight) moveVec.x += 1;
+                
+                // Vertical Move
+                if(keys[" "]) moveVec.y += 1;
+                if(keys.Shift) moveVec.y -= 1;
 
                 if (moveVec.length() > 0) {
                     moveVec.normalize().multiplyScalar(playerSpeed);
                     
-                    // Transform direction based on camera Y-rotation
-                    const camY = camera.rotation.y; 
-                    // This is simple approx for OrbitControls:
-                    // Actually we need to move relative to camera's forward vector projected on XZ plane
                     const forward = new THREE.Vector3();
                     camera.getWorldDirection(forward);
                     forward.y = 0; forward.normalize();
@@ -490,16 +497,20 @@
                     
                     const finalMove = new THREE.Vector3();
                     finalMove.addScaledVector(forward, -moveVec.z);
-                    finalMove.addScaledVector(right, moveVec.x); // Corrected: A/D mapped to Right vector
+                    finalMove.addScaledVector(right, moveVec.x); 
+                    finalMove.y = moveVec.y; // Direct Y control
                     
                     player.position.add(finalMove);
                 }
 
+                // Prevent going under floor
                 if(player.position.y < -50) player.position.y = 50;
+                
+                // Bobbing & Facing Camera (Billboard)
                 playerSprite.position.y = 3 + Math.sin(time * 5) * 0.3;
+                playerSprite.lookAt(camera.position); // Always face user
 
-                // 2. Sync OrbitControls target to Player
-                // This makes the camera follow the player, but you can still rotate
+                // 2. Sync OrbitControls
                 controls.target.lerp(player.position, 0.1);
                 controls.update();
 
