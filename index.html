@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>100 Days: The Exhibition (Steady Cam)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>100 Days: The Exhibition (Mobile Ready)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Lato:wght@300;400;700&display=swap');
 
@@ -12,6 +12,7 @@
             background: #000;
             font-family: 'Lato', sans-serif;
             user-select: none; -webkit-user-select: none;
+            touch-action: none; /* Prevent browser scrolling on mobile */
         }
 
         /* UI LAYER */
@@ -27,34 +28,47 @@
             transition: opacity 0.5s;
         }
         #header-info h1 {
-            font-family: 'Playfair Display', serif; font-size: 4rem; margin: 0;
+            font-family: 'Playfair Display', serif; font-size: 3rem; margin: 0;
             color: #fff; letter-spacing: -1px;
         }
+        @media (max-width: 600px) { #header-info h1 { font-size: 2rem; } }
+
         #header-info p {
-            font-size: 1.1rem; color: #d4af37; letter-spacing: 5px; text-transform: uppercase; margin-top: 5px; font-weight: 700;
+            font-size: 1rem; color: #d4af37; letter-spacing: 4px; text-transform: uppercase; margin-top: 5px; font-weight: 700;
         }
 
-        #controls-hint {
-            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
-            color: rgba(255,255,255,0.7); font-size: 0.8rem; letter-spacing: 1px;
-            background: rgba(0,0,0,0.7); padding: 12px 30px; border-radius: 50px;
-            text-transform: uppercase; border: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(5px); pointer-events: none; line-height: 1.5;
-            text-align: center;
+        /* JOYSTICK (Mobile Control) */
+        #joystick-zone {
+            position: absolute; bottom: 40px; left: 40px;
+            width: 120px; height: 120px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            pointer-events: auto; /* Enable touch */
+            display: flex; justify-content: center; align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        #joystick-knob {
+            width: 50px; height: 50px;
+            background: rgba(255, 215, 0, 0.8);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            position: relative;
+            transform: translate(0px, 0px);
         }
 
         /* JUMP BUTTONS */
         .nav-btn {
             position: absolute; bottom: 50%; transform: translateY(50%);
-            background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);
             padding: 20px; border-radius: 50%; cursor: pointer; pointer-events: auto;
             backdrop-filter: blur(5px); transition: all 0.3s;
-            width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;
-            font-size: 1.5rem;
+            width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem;
         }
-        .nav-btn:hover { background: white; color: black; transform: translateY(50%) scale(1.1); }
-        #next-jump { right: 40px; }
-        #prev-jump { left: 40px; display: none; }
+        .nav-btn:hover { background: white; color: black; }
+        #next-jump { right: 20px; }
+        #prev-jump { left: 20px; display: none; }
 
         /* START SCREEN */
         #start-screen {
@@ -64,29 +78,29 @@
             cursor: pointer; pointer-events: auto;
         }
         #huzzah-img {
-            width: 300px; border-radius: 20px; box-shadow: 0 40px 80px rgba(0,0,0,0.2);
+            width: 250px; border-radius: 20px; box-shadow: 0 40px 80px rgba(0,0,0,0.2);
             transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
         #huzzah-img:hover { transform: scale(1.05) translateY(-10px); }
         .click-hint {
             margin-top: 40px; font-family: 'Playfair Display', serif; font-style: italic;
-            color: #d4af37; font-size: 1.5rem; animation: pulse 2s infinite; font-weight: bold;
+            color: #d4af37; font-size: 1.2rem; animation: pulse 2s infinite; font-weight: bold;
         }
-        #status-text { font-size: 0.9rem; color: #999; margin-top: 15px; font-weight: 300; letter-spacing: 1px; }
+        #status-text { font-size: 0.8rem; color: #999; margin-top: 15px; font-weight: 300; letter-spacing: 1px; }
 
         /* LETTER MODAL */
         #letter-modal {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 90%; max-width: 600px; background: #fffbf0;
-            padding: 60px; border-radius: 8px; box-shadow: 0 50px 100px rgba(0,0,0,0.9);
+            width: 85%; max-width: 500px; background: #fffbf0;
+            padding: 40px; border-radius: 8px; box-shadow: 0 50px 100px rgba(0,0,0,0.9);
             border: 1px solid #d4af37; z-index: 200; text-align: center; opacity: 0; pointer-events: none;
             transition: opacity 1s; display: none;
         }
         #letter-modal.visible { opacity: 1; pointer-events: auto; display: block; }
-        .letter-content h3 { font-family: 'Playfair Display', serif; font-size: 3rem; color: #333; margin-bottom: 30px; }
-        .letter-content p { font-size: 1.3rem; line-height: 1.8; color: #555; margin-bottom: 50px; font-family: 'Playfair Display', serif; }
+        .letter-content h3 { font-family: 'Playfair Display', serif; font-size: 2rem; color: #333; margin-bottom: 20px; }
+        .letter-content p { font-size: 1.1rem; line-height: 1.6; color: #555; margin-bottom: 40px; font-family: 'Playfair Display', serif; }
         .close-btn {
-            background: transparent; color: #d4af37; border: 1px solid #d4af37; padding: 15px 50px;
+            background: transparent; color: #d4af37; border: 1px solid #d4af37; padding: 12px 40px;
             border-radius: 50px; cursor: pointer; font-size: 0.9rem; font-weight: bold; transition: all 0.3s;
             text-transform: uppercase; letter-spacing: 2px;
         }
@@ -101,7 +115,7 @@
         }
         #zoom-overlay.active { opacity: 1; }
         #zoom-img { 
-            max-width: 90%; max-height: 85%; border: 20px solid #fff; 
+            max-width: 95%; max-height: 85%; border: 10px solid #fff; 
             box-shadow: 0 0 100px rgba(0,0,0,1); cursor: default; 
         }
         #close-hint { color: #666; margin-top: 30px; font-size: 0.8rem; letter-spacing: 4px; text-transform: uppercase; }
@@ -127,10 +141,11 @@
             <h1 id="chap-head">The Journey</h1>
             <p id="chap-sub">100 Days of Adventure</p>
         </div>
-        <div id="controls-hint">
-            WASD to Move Choonsik • Space/Shift to Fly<br>
-            Drag to Rotate View
+        
+        <div id="joystick-zone">
+            <div id="joystick-knob"></div>
         </div>
+
         <div id="prev-jump" class="nav-btn" onclick="jumpTo(-1)">‹</div>
         <div id="next-jump" class="nav-btn" onclick="jumpTo(1)">›</div>
     </div>
@@ -164,16 +179,16 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
     <script>
-        // --- STARTUP LOGIC ---
+        // --- STARTUP ---
         let isStarted = false;
         let isReady = false;
         let loadedCount = 0;
 
         window.onload = function() {
             isReady = true;
-            document.getElementById('start-btn-text').innerText = "ENTER THE GALLERY";
+            document.getElementById('start-btn-text').innerText = "ENTER GALLERY";
             document.getElementById('start-btn-text').style.color = "#d4af37";
-            document.getElementById('status-text').innerText = "Ready for you";
+            document.getElementById('status-text').innerText = "Ready!";
         };
 
         function tryStart() {
@@ -183,7 +198,6 @@
             screen.style.opacity = 0;
             setTimeout(() => { screen.style.display = 'none'; }, 1500);
             
-            // Initial Camera Position
             gsap.to(camera.position, {z: 60, y: 20, x: 0, duration: 3, ease: "power2.out"});
             gsap.to(controls.target, {x: 0, y: 0, z: 0, duration: 3});
         }
@@ -195,7 +209,6 @@
         }
 
         // --- CONFIG ---
-        // offset: Where the camera should go to "See" this island
         const memories = [
             { 
                 id: 'birthday', title: "The Birthday", sub: "Green Cakes & Red Lights", 
@@ -239,7 +252,7 @@
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-        // CONTROLS (Steady Cam Config)
+        // CONTROLS
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
@@ -258,7 +271,7 @@
         dir.shadow.mapSize.height = 2048;
         scene.add(dir);
 
-        // --- CHOONSIK (CHARACTER) ---
+        // --- CHOONSIK ---
         let choonsik, choonsikSprite;
         const playerSpeed = 0.5;
 
@@ -286,12 +299,11 @@
             shadow.position.y = 0.1;
             choonsik.add(shadow);
             
-            // Start Choonsik at first island
             choonsik.position.set(0, 0, 0); 
         }
         createChoonsik();
 
-        // --- ASSETS ---
+        // --- WORLD GENERATION (Same High-Res Assets) ---
         function createGiftBox(color) {
             const grp = new THREE.Group();
             const mat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.3 });
@@ -302,7 +314,6 @@
             grp.add(new THREE.Mesh(new THREE.BoxGeometry(0.5, 3.1, 3.1), ribMat));
             return grp;
         }
-
         function createLantern(color) {
             const grp = new THREE.Group();
             const core = new THREE.Mesh(new THREE.DodecahedronGeometry(1.5), new THREE.MeshBasicMaterial({ color: color }));
@@ -311,7 +322,6 @@
             grp.add(new THREE.PointLight(color, 2, 20));
             return grp;
         }
-
         function createSnowman() {
             const grp = new THREE.Group();
             const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 });
@@ -321,7 +331,6 @@
             grp.add(b1, b2, hat);
             return grp;
         }
-
         function createBook() {
             const grp = new THREE.Group();
             const cover = new THREE.Mesh(new THREE.BoxGeometry(2, 0.3, 3), new THREE.MeshStandardMaterial({ color: Math.random()*0xffffff }));
@@ -330,7 +339,6 @@
             return grp;
         }
 
-        // --- WORLD ---
         const textureLoader = new THREE.TextureLoader();
         const photoMeshes = [];
 
@@ -343,19 +351,11 @@
                     tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
                     tex.minFilter = THREE.LinearFilter;
                     tex.magFilter = THREE.LinearFilter;
-                    
                     const aspect = tex.image.width / tex.image.height;
                     const w = 8; const h = w/aspect;
-                    
-                    mesh.geometry.dispose();
-                    mesh.geometry = new THREE.PlaneGeometry(w, h);
-                    mesh.material.map = tex;
-                    mesh.material.color.setHex(0xffffff);
-                    mesh.material.needsUpdate = true;
-                    
-                    mesh.children[0].geometry.dispose();
-                    mesh.children[0].geometry = new THREE.BoxGeometry(w+0.5, h+0.5, 0.2);
-                    
+                    mesh.geometry.dispose(); mesh.geometry = new THREE.PlaneGeometry(w, h);
+                    mesh.material.map = tex; mesh.material.color.setHex(0xffffff); mesh.material.needsUpdate = true;
+                    mesh.children[0].geometry.dispose(); mesh.children[0].geometry = new THREE.BoxGeometry(w+0.5, h+0.5, 0.2);
                     mesh.userData.src = url;
                     loadedCount++;
                     document.getElementById('status-text').innerText = `Curating Museum: ${loadedCount}/${totalPhotos}`;
@@ -368,7 +368,6 @@
             const group = new THREE.Group();
             group.position.set(mem.pos.x, mem.pos.y, mem.pos.z);
 
-            // Wide Platform
             const platGeo = new THREE.CylinderGeometry(25, 22, 1, 64);
             const platMat = new THREE.MeshPhysicalMaterial({ color: 0x111111, roughness: 0.1, metalness: 0.5, transparent: true, opacity: 0.9, clearcoat: 1.0 });
             const platform = new THREE.Mesh(platGeo, platMat);
@@ -376,36 +375,11 @@
             platform.receiveShadow = true;
             group.add(platform);
 
-            // Decor
-            if (mem.id === 'birthday') {
-                for(let i=0; i<6; i++) {
-                    const box = createGiftBox(mem.color);
-                    box.position.set((Math.random()-0.5)*25, -4, (Math.random()-0.5)*25);
-                    box.rotation.y = Math.random();
-                    group.add(box);
-                }
-            } else if (mem.id === 'stream') {
-                for(let i=0; i<8; i++) {
-                    const lan = createLantern(0xffaa00);
-                    lan.position.set((Math.random()-0.5)*30, Math.random()*15, (Math.random()-0.5)*30);
-                    group.add(lan);
-                }
-            } else if (mem.id === 'daegu') {
-                for(let i=0; i<4; i++) {
-                    const snow = createSnowman();
-                    snow.position.set((Math.random()-0.5)*25, -4.5, (Math.random()-0.5)*25);
-                    group.add(snow);
-                }
-            } else if (mem.id === 'study') {
-                for(let i=0; i<15; i++) {
-                    const book = createBook();
-                    book.position.set((Math.random()-0.5)*20, -5 + (i*0.4), (Math.random()-0.5)*20);
-                    book.rotation.y = Math.random() * Math.PI;
-                    group.add(book);
-                }
-            }
+            if (mem.id === 'birthday') for(let i=0; i<6; i++) { const box = createGiftBox(mem.color); box.position.set((Math.random()-0.5)*25, -4, (Math.random()-0.5)*25); box.rotation.y = Math.random(); group.add(box); }
+            else if (mem.id === 'stream') for(let i=0; i<8; i++) { const lan = createLantern(0xffaa00); lan.position.set((Math.random()-0.5)*30, Math.random()*15, (Math.random()-0.5)*30); group.add(lan); }
+            else if (mem.id === 'daegu') for(let i=0; i<4; i++) { const snow = createSnowman(); snow.position.set((Math.random()-0.5)*25, -4.5, (Math.random()-0.5)*25); group.add(snow); }
+            else if (mem.id === 'study') for(let i=0; i<15; i++) { const book = createBook(); book.position.set((Math.random()-0.5)*20, -5 + (i*0.4), (Math.random()-0.5)*20); book.rotation.y = Math.random() * Math.PI; group.add(book); }
 
-            // Photos - WIDER Arc
             const count = mem.photos.length;
             const radius = 16;
             const angleStep = (Math.PI * 1.2) / count;
@@ -415,22 +389,62 @@
                 const angle = startAngle + (i * angleStep);
                 const x = Math.sin(angle) * radius;
                 const z = Math.cos(angle) * radius - 10;
-                
                 const mesh = new THREE.Mesh(new THREE.PlaneGeometry(5,3.5), new THREE.MeshBasicMaterial({color: 0x333333}));
                 mesh.position.set(x, (Math.random()-0.5)*2, z);
                 mesh.lookAt(0,0,40); 
-                
-                const frameMat = new THREE.MeshStandardMaterial({color: 0xffd700, metalness: 0.9, roughness: 0.1});
-                const frame = new THREE.Mesh(new THREE.BoxGeometry(5.2, 3.7, 0.2), frameMat);
-                frame.position.z = -0.15;
-                mesh.add(frame);
-
+                const frame = new THREE.Mesh(new THREE.BoxGeometry(5.2, 3.7, 0.2), new THREE.MeshStandardMaterial({color: 0xffd700, metalness: 0.9, roughness: 0.1}));
+                frame.position.z = -0.15; mesh.add(frame);
                 group.add(mesh);
                 photoMeshes.push(mesh);
                 tryLoadTexture(baseName, mesh);
             });
-
             scene.add(group);
+        });
+
+        // --- JOYSTICK LOGIC ---
+        const joystick = { active: false, dx: 0, dy: 0, originX: 0, originY: 0 };
+        const joyZone = document.getElementById('joystick-zone');
+        const joyKnob = document.getElementById('joystick-knob');
+
+        joyZone.addEventListener('touchstart', e => {
+            joystick.active = true;
+            joystick.originX = e.touches[0].clientX;
+            joystick.originY = e.touches[0].clientY;
+            // Prevent camera orbit when touching joystick
+            controls.enabled = false;
+        });
+
+        window.addEventListener('touchmove', e => {
+            if(joystick.active) {
+                const touch = e.touches[0];
+                let dx = touch.clientX - joystick.originX;
+                let dy = touch.clientY - joystick.originY;
+                
+                // Clamp max distance
+                const maxDist = 35;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if(dist > maxDist) {
+                    dx = (dx / dist) * maxDist;
+                    dy = (dy / dist) * maxDist;
+                }
+                
+                // Visual update
+                joyKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+                
+                // Normalized vector for movement (-1 to 1)
+                joystick.dx = dx / maxDist;
+                joystick.dy = dy / maxDist;
+            }
+        });
+
+        window.addEventListener('touchend', e => {
+            if(joystick.active) {
+                joystick.active = false;
+                joystick.dx = 0;
+                joystick.dy = 0;
+                joyKnob.style.transform = `translate(0px, 0px)`;
+                controls.enabled = true; // Re-enable camera orbit
+            }
         });
 
         // --- CONTROLS ---
@@ -440,23 +454,21 @@
 
         let currentMemIndex = 0;
         
-        // JUMP FUNCTION - FIXED ZOOM
         window.jumpTo = function(dir) {
             let nextIdx = Math.max(0, Math.min(currentMemIndex + dir, memories.length-1));
             const mem = memories[nextIdx];
             
-            // 1. Move Camera Target (Orbit Pivot) to New Island Center
+            // 1. Move Camera Target (Steady Island Center)
             gsap.to(controls.target, {
                 x: mem.pos.x, y: mem.pos.y, z: mem.pos.z,
                 duration: 2, ease: "power2.inOut"
             });
 
-            // 2. Move Camera Position to a "Director's Angle" (Offset)
-            // This ensures we are always close enough to see!
+            // 2. Fly Camera to "Director's Angle" (Fixed Offset)
             gsap.to(camera.position, {
                 x: mem.pos.x, 
-                y: mem.pos.y + 15, // Slightly above
-                z: mem.pos.z + 55, // 55 units back (Perfect framing distance)
+                y: mem.pos.y + 15, 
+                z: mem.pos.z + 55, // Fixed viewing distance
                 duration: 2, ease: "power2.inOut"
             });
 
@@ -474,7 +486,7 @@
         const mouse = new THREE.Vector2();
         
         window.addEventListener('click', e => {
-            if(!isStarted || e.target.closest('.nav-btn')) return;
+            if(!isStarted || e.target.closest('.nav-btn') || e.target.closest('#joystick-zone')) return;
             
             mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
@@ -498,14 +510,21 @@
             const time = clock.getElapsedTime();
 
             if(isStarted && choonsik) {
-                // 1. Move Choonsik (WASD) - Relative to Camera
+                // 1. Move Choonsik (WASD + Joystick)
+                // Movement is relative to Camera Angle
                 const moveVec = new THREE.Vector3(0,0,0);
+                
+                // Keyboard Input
                 if(keys.w || keys.ArrowUp) moveVec.z -= 1;
                 if(keys.s || keys.ArrowDown) moveVec.z += 1;
                 if(keys.a || keys.ArrowLeft) moveVec.x -= 1;
                 if(keys.d || keys.ArrowRight) moveVec.x += 1;
-                if(keys[" "]) moveVec.y += 1;
-                if(keys.Shift) moveVec.y -= 1;
+                
+                // Joystick Input
+                if(joystick.active) {
+                    moveVec.z += joystick.dy;
+                    moveVec.x += joystick.dx;
+                }
 
                 if (moveVec.length() > 0) {
                     moveVec.normalize().multiplyScalar(playerSpeed);
@@ -519,22 +538,33 @@
                     const finalMove = new THREE.Vector3();
                     finalMove.addScaledVector(forward, -moveVec.z);
                     finalMove.addScaledVector(right, moveVec.x);
-                    finalMove.y = moveVec.y; 
                     
                     choonsik.position.add(finalMove);
                 }
 
-                // Bobbing & Facing Camera
+                // 2. BOUNDARY CHECK (Invisible Walls)
+                // Choonsik must stay within 22 units of the current island center
+                const currentIslandPos = new THREE.Vector3(memories[currentMemIndex].pos.x, memories[currentMemIndex].pos.y, memories[currentMemIndex].pos.z);
+                const dist = choonsik.position.distanceTo(currentIslandPos);
+                const maxRadius = 22; 
+                
+                if(dist > maxRadius) {
+                    // Pull him back to edge
+                    const dirToCenter = new THREE.Vector3().subVectors(choonsik.position, currentIslandPos).normalize();
+                    choonsik.position.copy(currentIslandPos.add(dirToCenter.multiplyScalar(maxRadius)));
+                }
+
+                // Bobbing & Facing
                 choonsikSprite.position.y = 3 + Math.sin(time * 5) * 0.3;
                 choonsikSprite.lookAt(camera.position); 
 
-                // 2. Camera Controls (Steady Cam)
-                // We DO NOT update controls.target to follow Choonsik here.
-                // This keeps the camera steady on the island.
-                // You move Choonsik within the view.
+                // 3. STEADY CAMERA
+                // We update controls, but we DO NOT move the target to follow Choonsik.
+                // Camera stays focused on the Island Center.
                 controls.update();
 
-                // 3. UI Updates
+                // 4. UI Updates
+                // Find nearest island just to update Index/Text
                 let closestIdx = -1;
                 let minDist = 80;
                 memories.forEach((mem, i) => {
