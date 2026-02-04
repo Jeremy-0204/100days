@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>100 Days: The Exhibition (Mobile Ready)</title>
+    <title>100 Days: The Exhibition (Travel Fix)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Lato:wght@300;400;700&display=swap');
 
@@ -12,7 +12,7 @@
             background: #000;
             font-family: 'Lato', sans-serif;
             user-select: none; -webkit-user-select: none;
-            touch-action: none; /* Prevent browser scrolling on mobile */
+            touch-action: none;
         }
 
         /* UI LAYER */
@@ -37,14 +37,14 @@
             font-size: 1rem; color: #d4af37; letter-spacing: 4px; text-transform: uppercase; margin-top: 5px; font-weight: 700;
         }
 
-        /* JOYSTICK (Mobile Control) */
+        /* JOYSTICK */
         #joystick-zone {
             position: absolute; bottom: 40px; left: 40px;
             width: 120px; height: 120px;
             background: rgba(255, 255, 255, 0.1);
             border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
-            pointer-events: auto; /* Enable touch */
+            pointer-events: auto; 
             display: flex; justify-content: center; align-items: center;
             backdrop-filter: blur(5px);
         }
@@ -57,16 +57,16 @@
             transform: translate(0px, 0px);
         }
 
-        /* JUMP BUTTONS */
+        /* NAV BUTTONS */
         .nav-btn {
             position: absolute; bottom: 50%; transform: translateY(50%);
             background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);
             padding: 20px; border-radius: 50%; cursor: pointer; pointer-events: auto;
             backdrop-filter: blur(5px); transition: all 0.3s;
             width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;
-            font-size: 1.2rem;
+            font-size: 1.5rem;
         }
-        .nav-btn:hover { background: white; color: black; }
+        .nav-btn:hover { background: white; color: black; transform: scale(1.1); }
         #next-jump { right: 20px; }
         #prev-jump { left: 20px; display: none; }
 
@@ -262,7 +262,6 @@
         controls.rotateSpeed = 0.4; 
         controls.maxPolarAngle = Math.PI / 1.8; 
         
-        // LIGHTS
         const amb = new THREE.AmbientLight(0xffffff, 0.6); scene.add(amb);
         const dir = new THREE.DirectionalLight(0xffd700, 1.2);
         dir.position.set(50, 100, 50);
@@ -303,7 +302,7 @@
         }
         createChoonsik();
 
-        // --- WORLD GENERATION (Same High-Res Assets) ---
+        // --- ASSETS ---
         function createGiftBox(color) {
             const grp = new THREE.Group();
             const mat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.3 });
@@ -339,6 +338,7 @@
             return grp;
         }
 
+        // --- WORLD ---
         const textureLoader = new THREE.TextureLoader();
         const photoMeshes = [];
 
@@ -410,7 +410,6 @@
             joystick.active = true;
             joystick.originX = e.touches[0].clientX;
             joystick.originY = e.touches[0].clientY;
-            // Prevent camera orbit when touching joystick
             controls.enabled = false;
         });
 
@@ -419,19 +418,10 @@
                 const touch = e.touches[0];
                 let dx = touch.clientX - joystick.originX;
                 let dy = touch.clientY - joystick.originY;
-                
-                // Clamp max distance
                 const maxDist = 35;
                 const dist = Math.sqrt(dx*dx + dy*dy);
-                if(dist > maxDist) {
-                    dx = (dx / dist) * maxDist;
-                    dy = (dy / dist) * maxDist;
-                }
-                
-                // Visual update
+                if(dist > maxDist) { dx = (dx / dist) * maxDist; dy = (dy / dist) * maxDist; }
                 joyKnob.style.transform = `translate(${dx}px, ${dy}px)`;
-                
-                // Normalized vector for movement (-1 to 1)
                 joystick.dx = dx / maxDist;
                 joystick.dy = dy / maxDist;
             }
@@ -440,10 +430,9 @@
         window.addEventListener('touchend', e => {
             if(joystick.active) {
                 joystick.active = false;
-                joystick.dx = 0;
-                joystick.dy = 0;
+                joystick.dx = 0; joystick.dy = 0;
                 joyKnob.style.transform = `translate(0px, 0px)`;
-                controls.enabled = true; // Re-enable camera orbit
+                controls.enabled = true;
             }
         });
 
@@ -453,30 +442,36 @@
         window.addEventListener('keyup', e => { if(keys.hasOwnProperty(e.key)) keys[e.key] = false; });
 
         let currentMemIndex = 0;
+        let isJumping = false; // Prevents boundary check during flight
         
         window.jumpTo = function(dir) {
+            if(isJumping) return;
+            isJumping = true;
+
             let nextIdx = Math.max(0, Math.min(currentMemIndex + dir, memories.length-1));
+            currentMemIndex = nextIdx; // Update immediately for logic
             const mem = memories[nextIdx];
             
-            // 1. Move Camera Target (Steady Island Center)
+            // 1. Move Focus (Orbit Center)
             gsap.to(controls.target, {
                 x: mem.pos.x, y: mem.pos.y, z: mem.pos.z,
                 duration: 2, ease: "power2.inOut"
             });
 
-            // 2. Fly Camera to "Director's Angle" (Fixed Offset)
+            // 2. Move Camera Position
             gsap.to(camera.position, {
                 x: mem.pos.x, 
                 y: mem.pos.y + 15, 
-                z: mem.pos.z + 55, // Fixed viewing distance
+                z: mem.pos.z + 55, 
                 duration: 2, ease: "power2.inOut"
             });
 
-            // 3. Teleport Choonsik
+            // 3. Move Choonsik (FOLLOW US!)
             if(choonsik) {
                 gsap.to(choonsik.position, {
                     x: mem.pos.x, y: mem.pos.y, z: mem.pos.z,
-                    duration: 2, ease: "power2.inOut"
+                    duration: 2, ease: "power2.inOut",
+                    onComplete: () => { isJumping = false; }
                 });
             }
         };
@@ -487,7 +482,6 @@
         
         window.addEventListener('click', e => {
             if(!isStarted || e.target.closest('.nav-btn') || e.target.closest('#joystick-zone')) return;
-            
             mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(mouse, camera);
@@ -510,21 +504,13 @@
             const time = clock.getElapsedTime();
 
             if(isStarted && choonsik) {
-                // 1. Move Choonsik (WASD + Joystick)
-                // Movement is relative to Camera Angle
+                // 1. Move Choonsik (WASD / Joystick)
                 const moveVec = new THREE.Vector3(0,0,0);
-                
-                // Keyboard Input
                 if(keys.w || keys.ArrowUp) moveVec.z -= 1;
                 if(keys.s || keys.ArrowDown) moveVec.z += 1;
                 if(keys.a || keys.ArrowLeft) moveVec.x -= 1;
                 if(keys.d || keys.ArrowRight) moveVec.x += 1;
-                
-                // Joystick Input
-                if(joystick.active) {
-                    moveVec.z += joystick.dy;
-                    moveVec.x += joystick.dx;
-                }
+                if(joystick.active) { moveVec.z += joystick.dy; moveVec.x += joystick.dx; }
 
                 if (moveVec.length() > 0) {
                     moveVec.normalize().multiplyScalar(playerSpeed);
@@ -542,53 +528,38 @@
                     choonsik.position.add(finalMove);
                 }
 
-                // 2. BOUNDARY CHECK (Invisible Walls)
-                // Choonsik must stay within 22 units of the current island center
-                const currentIslandPos = new THREE.Vector3(memories[currentMemIndex].pos.x, memories[currentMemIndex].pos.y, memories[currentMemIndex].pos.z);
-                const dist = choonsik.position.distanceTo(currentIslandPos);
-                const maxRadius = 22; 
-                
-                if(dist > maxRadius) {
-                    // Pull him back to edge
-                    const dirToCenter = new THREE.Vector3().subVectors(choonsik.position, currentIslandPos).normalize();
-                    choonsik.position.copy(currentIslandPos.add(dirToCenter.multiplyScalar(maxRadius)));
+                // 2. BOUNDARY CHECK (Only when NOT jumping)
+                if(!isJumping) {
+                    const currentIslandPos = new THREE.Vector3(memories[currentMemIndex].pos.x, memories[currentMemIndex].pos.y, memories[currentMemIndex].pos.z);
+                    const dist = choonsik.position.distanceTo(currentIslandPos);
+                    const maxRadius = 22; 
+                    
+                    if(dist > maxRadius) {
+                        const dirToCenter = new THREE.Vector3().subVectors(choonsik.position, currentIslandPos).normalize();
+                        choonsik.position.copy(currentIslandPos.add(dirToCenter.multiplyScalar(maxRadius)));
+                    }
                 }
 
-                // Bobbing & Facing
                 choonsikSprite.position.y = 3 + Math.sin(time * 5) * 0.3;
                 choonsikSprite.lookAt(camera.position); 
 
-                // 3. STEADY CAMERA
-                // We update controls, but we DO NOT move the target to follow Choonsik.
-                // Camera stays focused on the Island Center.
                 controls.update();
 
                 // 4. UI Updates
-                // Find nearest island just to update Index/Text
-                let closestIdx = -1;
-                let minDist = 80;
-                memories.forEach((mem, i) => {
-                    const d = choonsik.position.distanceTo(new THREE.Vector3(mem.pos.x, mem.pos.y, mem.pos.z));
-                    if(d < minDist) { minDist = d; closestIdx = i; }
-                });
-
-                if(closestIdx !== -1) {
-                    currentMemIndex = closestIdx;
-                    const mem = memories[closestIdx];
-                    if(head.innerText !== mem.title) {
-                        const info = document.getElementById('header-info');
-                        info.style.opacity = 0;
-                        setTimeout(() => {
-                            head.innerText = mem.title;
-                            sub.innerText = mem.sub;
-                            info.style.opacity = 1;
-                        }, 500);
-                        
-                        document.getElementById('prev-jump').style.display = closestIdx > 0 ? 'flex' : 'none';
-                        document.getElementById('next-jump').style.display = closestIdx < memories.length-1 ? 'flex' : 'none';
-                        if(closestIdx === memories.length-1) {
-                            setTimeout(() => document.getElementById('letter-modal').classList.add('visible'), 2000);
-                        }
+                const mem = memories[currentMemIndex];
+                if(head.innerText !== mem.title) {
+                    const info = document.getElementById('header-info');
+                    info.style.opacity = 0;
+                    setTimeout(() => {
+                        head.innerText = mem.title;
+                        sub.innerText = mem.sub;
+                        info.style.opacity = 1;
+                    }, 500);
+                    
+                    document.getElementById('prev-jump').style.display = currentMemIndex > 0 ? 'flex' : 'none';
+                    document.getElementById('next-jump').style.display = currentMemIndex < memories.length-1 ? 'flex' : 'none';
+                    if(currentMemIndex === memories.length-1) {
+                        setTimeout(() => document.getElementById('letter-modal').classList.add('visible'), 2000);
                     }
                 }
             }
